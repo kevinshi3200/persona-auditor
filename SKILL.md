@@ -122,31 +122,26 @@ trigger:
 
 ### Intake Gate (mandatory, never skip, never guess)
 
-The "ruler" of paper traversal is only known to the user — **the agent must never make it up**.
+**Core principle: the agent answers first, the human only fills what AI can't know.** This skill is for the agent itself — it can read code, README, and context. So most questions are **answered by the agent first, inferred from code** (with evidence + confidence), not dumped on the human. Only what "isn't in code, only in the founder's head" gets asked of the human — the human's answer fills the real intent AI can't see; it does not do the agent's homework.
 
-**Step 1: classify the project.** Quickly read `README` / `package.json` / directory structure to determine the project type (web app / CLI / library / desktop app / agent system / game / other).
+**Round 1 — agent self-answers (infer before asking).** Read code + README + context; answer each item with `inferred answer + evidence + confidence (high / medium / low)`:
 
-**Step 2: four universal questions** (ask for any project):
-1. **Who is it for**: how many target user types? What usage habits, expectations, and tolerance does each have?
-2. **Design intent**: for each core feature, what experience did the designer want the user to get?
-3. **Release scenario (decides whether compliance / store-review checks apply — not asking this guarantees false positives)**: where does it ship (App Store / Google Play / domestic app stores / direct download / not shipped)? Personal or commercial? Is a software copyright registration (软著) planned? — **This directly decides whether "software-copyright compliance" and "store-review gating" checks run**: if not shipping / personal use / no registration, skip these checks — otherwise everything is a false positive.
-4. **Audit scope**: all six layers, or only some?
+1. **Project type** — web app / CLI / library / desktop app / agent system / game / other (from README / package.json / structure).
+2. **Target users** — how many types, what habits (reverse-infer from README / copy / features).
+3. **Release scenario** — ships where? personal vs commercial? software-copyright? (infer from package.json / README / deploy config; this decides whether compliance / store-review checks apply).
+4. **Type-specific follow-ups** — web/desktop: which journeys are core, which step loses users, any target platform; CLI/library: target devs, integration scenarios, API constraints; agent system: interaction mode (chat/canvas/voice), automation boundary (what must never auto-run); game: target players, core fun, payment/store plan.
+5. **Depth tier** — Lite / Standard / Deep, with a one-line reason (see "Audit Depth Tiers").
+6. **Loop mode** — one-shot / incremental / gate (see "Embedding in an Existing Loop").
 
-**Step 3: type-specific follow-ups** (ask targeted questions after classification, so the intake gate produces correct, useful questions for any project):
-- **web / desktop app**: which user journeys are core? Which step most easily loses / confuses users? Any target platform to ship to?
-- **CLI / library**: who are the target developers? Typical integration scenarios? Any API constraints deliberately maintained?
-- **agent system**: human-computer interaction mode (chat / canvas / voice)? Where is the automation boundary (which actions must never be auto-run)?
-- **game**: target players? Core fun? Any payment / store plan?
+**Round 2 — human fills the gaps (only what code can't answer).** From Round 1, take the items with **low confidence** or that **change the audit conclusion**, and ask the human as **multiple-choice** — each question shows the agent's inferred answer as the **recommended option**, a few alternatives, and a **"skip — use your inference"** option.
 
-**Step 4: audit depth tier — adapt the weight.** Based on step 1 (type) and step 2 (who / intent / release), **recommend one tier with a one-line reason and let the user confirm or override**:
-- 🟢 **Lite** — landing page / one-off script / personal tool / self-use, not shipping. Core paths only.
-- 🟡 **Standard (default)** — medium project / internal tool / acceptance. Full ten steps, layers trimmed by release scenario.
-- 🔴 **Deep** — store shipping / copyright / commercial release / high concurrency / sensitive data / agent system / "full acceptance". Everything on.
-See "Audit Depth Tiers" below for what each tier runs and skips.
+**Always ask the human (code never contains these):**
+1. **Design intent** — for each core feature, what experience did you *want* the user to get? (code shows what it does, not what it means to achieve)
+2. **Real user thoughts** — the actual habits / tolerance / pain points of your target users (not in code)
+3. **Release final say** — does it actually ship / register copyright? (partly inferable, but you decide)
+4. **Is the requirement itself right?** — only when it arises (A/B reference-group choice)
 
-**Step 5: loop mode — one-shot vs embedded.** Ask: is this a one-off audit, or does it plug into your existing dev loop? If embedded, also ask the loop stage (after edit / before commit / before release) and the output shape (full report vs short pass/fail). See "Embedding in an Existing Loop" below.
-
-**Fallback rule**: for items the user cannot answer, reverse-engineer from `code + README + design docs`, and tag in the report `【reverse-inferred, not user-stated, needs confirmation】`. During the audit, if a point arises that "only the user can decide" (which A/B reference group to choose, whether the requirement itself is right, whether to replace a reinvented wheel, which depth tier, which loop mode), **stop and ask the user — don't decide for them**.
+**Fallback rule**: skipped items use the agent's inferred value, tagged `【agent-inferred, not user-stated, needs confirmation】` in the report. If a point arises that "only the user can decide" (A/B reference group, requirement validity, wheel replacement, depth tier, loop mode), **stop and ask — never decide for them**.
 
 ### Audit Depth Tiers (adapt the weight to the project)
 
@@ -198,9 +193,9 @@ Execution principles:
 
 ### Step 0: Set the ruler — user-persona layering (targeted)
 
-Based on a **three-way synthesis**: intake gate (user-stated) + light research (external real-user data) + reverse-inference (code/docs), produce:
+Based on a **three-way synthesis**: intake gate (human-stated intent) + agent self-answer (code-inferred) + light research (external real-user data), produce:
 
-- **User-persona layering table**: ≥3 user types; for each write: usage habits / expectations / tolerance / features they will and won't use / **pain points** / **behavior patterns**. Tag each item's source: 【user-stated】/【light research · URL】/【reverse-inferred】.
+- **User-persona layering table**: ≥3 user types; for each write: usage habits / expectations / tolerance / features they will and won't use / **pain points** / **behavior patterns**. Tag each item's source: 【user-stated】/【agent-inferred】/【light research · URL】.
 - **Design-intent table**: for each feature, write "what experience the designer wanted the user to get", with source tags.
 
 ### Step 1: Recover the truth — read code and model the state machine
