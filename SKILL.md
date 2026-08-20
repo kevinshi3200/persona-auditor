@@ -114,6 +114,7 @@ trigger:
 9. **What not to touch / not to report**: test fixtures / vendored third-party code (minified) / build artifacts (out/dist) / .env templates / TODO placeholders in docs — these are **not problems** by default, unless the user explicitly asks to audit them. Reporting them is a false positive.
 10. **If you can't find it, say honestly what's missing — never fabricate.**
 11. **Conclusions must be falsifiable (the bottom line of being scientific)**: every root-cause / defect conclusion must carry a **falsifiable verification method** — "if I fix X, symptom Y should disappear; if Y persists after fixing X, this conclusion is wrong." **Forbidden to report unfalsifiable conclusions** (e.g. "bad architecture", "poor code quality", "not good enough"). A conclusion with no verification path = unfalsifiable = not an audit finding, only an "impression" — downgrade it and tag `【impression, no verification path】`.
+12. **Audit weight adapts to the scenario — never over-audit or under-audit**: a landing page / personal tool / self-use project = Lite (core paths + release-hygiene sweep, no full ten steps). Store shipping / copyright / sensitive data / agent system = Deep. Always **recommend a tier with a reason and let the user confirm**; never silently escalate, and never run the heavy pipeline on something that doesn't need it.
 
 ---
 
@@ -137,9 +138,55 @@ The "ruler" of paper traversal is only known to the user — **the agent must ne
 - **agent system**: human-computer interaction mode (chat / canvas / voice)? Where is the automation boundary (which actions must never be auto-run)?
 - **game**: target players? Core fun? Any payment / store plan?
 
-**Fallback rule**: for items the user cannot answer, reverse-engineer from `code + README + design docs`, and tag in the report `【reverse-inferred, not user-stated, needs confirmation】`. During the audit, if a point arises that "only the user can decide" (which A/B reference group to choose, whether the requirement itself is right, whether to replace a reinvented wheel), **stop and ask the user — don't decide for them**.
+**Step 4: audit depth tier — adapt the weight.** Based on step 1 (type) and step 2 (who / intent / release), **recommend one tier with a one-line reason and let the user confirm or override**:
+- 🟢 **Lite** — landing page / one-off script / personal tool / self-use, not shipping. Core paths only.
+- 🟡 **Standard (default)** — medium project / internal tool / acceptance. Full ten steps, layers trimmed by release scenario.
+- 🔴 **Deep** — store shipping / copyright / commercial release / high concurrency / sensitive data / agent system / "full acceptance". Everything on.
+See "Audit Depth Tiers" below for what each tier runs and skips.
 
-### Light Research (after intake gate, before step 0, mandatory)
+**Step 5: loop mode — one-shot vs embedded.** Ask: is this a one-off audit, or does it plug into your existing dev loop? If embedded, also ask the loop stage (after edit / before commit / before release) and the output shape (full report vs short pass/fail). See "Embedding in an Existing Loop" below.
+
+**Fallback rule**: for items the user cannot answer, reverse-engineer from `code + README + design docs`, and tag in the report `【reverse-inferred, not user-stated, needs confirmation】`. During the audit, if a point arises that "only the user can decide" (which A/B reference group to choose, whether the requirement itself is right, whether to replace a reinvented wheel, which depth tier, which loop mode), **stop and ask the user — don't decide for them**.
+
+### Audit Depth Tiers (adapt the weight to the project)
+
+**Not every project needs a heavy audit — a landing page or a personal tool should not run the full ten steps.** The agent infers a tier from the intake answers (never guesses), recommends it with a reason, and lets the user override.
+
+How to decide:
+1. **Project size**: single file / small vs medium vs large multi-module.
+2. **Purpose**: self-use / internal / commercial / shipping.
+3. **Release scenario**: not shipping / direct download / store / copyright registration.
+4. **Risk surface**: does it handle user data? concurrency? auth / permission / payment? AI-generated mainline?
+5. **User intent**: "quick look" vs "full acceptance / pre-release".
+
+| Tier | For | Runs | Skips |
+|---|---|---|---|
+| 🟢 **Lite** | landing page, one-off script, personal tool, self-use (not shipping) | quick classify; 1–2 personas on the 1–3 core paths; experience alignment (core features only); quick release-hygiene sweep; simplified attribution | six-layer checks, wheel-reinvention audit, extreme testing, concurrency stress, orthogonal-array exhaustion, light research |
+| 🟡 **Standard (default)** | medium project, internal tool, acceptance | full ten steps; six-layer checks trimmed by release scenario | compliance layer if not shipping / no copyright |
+| 🔴 **Deep** | store shipping, copyright, commercial release, high concurrency, sensitive data, agent system, "full acceptance" | everything: ten steps + all six layers + extreme testing + concurrency stress | nothing |
+
+Rules:
+- **Recommend, don't decide**: state the tier + one-line reason; let the user override ("just a quick look" → Lite; "I want it thorough" → Deep).
+- **Never silently escalate**: Lite is the floor; only upgrade past Standard with a concrete risk signal (shipping / sensitive data / auth / payment). A big codebase alone is not a reason to run Deep.
+- **Record the tier honestly**: the report states which tier ran and what was skipped and why.
+
+### Embedding in an Existing Loop
+
+If the user already has an ongoing dev loop, the audit plugs in instead of always being a one-off:
+
+| Mode | When | Scope | Output |
+|---|---|---|---|
+| **One-shot** | standalone full audit | everything | full six-layer report |
+| **Incremental** | after each change in the loop | `git diff` + the user paths the diff touches (reverse-inferred from the state machine) | short: new/recurring blockers + root cause |
+| **Gate** | before commit / merge / release | high-risk layers only (high-severity security + release hygiene + core paths) | PASS / BLOCK + blocking list |
+
+Execution principles:
+- **Baseline once, then increment**: the first run in a loop does a Standard/Deep audit to build the baseline (personas + state machine + root causes); later runs are Incremental and reuse it — **never re-run the full audit** unless the user asks or the code structure changed fundamentally.
+- **Incremental scope** = `git diff` + reverse-infer which user paths the diff touches (via the state machine); run persona traversal + read-code verification + attribution **only on those paths**.
+- **Gate pass criteria stated up front**: e.g. "no high-severity security, no blocking logic errors, no secret/PII leakage" → PASS; otherwise BLOCK + blocking list with root cause.
+- **Match the output to the loop**: a full report is useless mid-loop; a bare PASS/FAIL is useless for a pre-release gate. The output shape was already asked in the intake gate (step 5).
+
+### Light Research (after intake gate, before step 0; mandatory for Standard/Deep, skippable for Lite)
 
 **Personas must not be invented off the top of your head — do a round of light research first to calibrate personas against real data, then choreograph simulated behavior.** This is not deep research; keep it to a few searches, only to get three things:
 
@@ -308,6 +355,8 @@ Output the six-layer results + step 9's attribution together. The report body is
 ## 10. Convergence directions (by root-cause impact, not by symptom severity)
 ```
 
+**Report header must state the audit tier** (🟢 Lite / 🟡 Standard / 🔴 Deep) and, when anything was skipped (Lite), what was skipped and why — honest about scope, not hidden.
+
 Every defect uniformly carries: `trigger sequence → expected vs actual → root → owning layer → severity`. **The conclusion section must be "the few root causes after attribution + impact ranking", not dozens of symptoms laid flat.**
 
 ---
@@ -337,5 +386,5 @@ Every defect uniformly carries: `trigger sequence → expected vs actual → roo
 
 ## 5. When to Use, When Not
 
-- **Use**: the longer development goes the fuzzier things get, repeatedly stuck in the first few steps, needs acceptance, before packaging, before store submission, before release, needs to judge "is the requirement itself right", needs a comprehensive six-layer audit.
+- **Use**: the longer development goes the fuzzier things get, repeatedly stuck in the first few steps, needs acceptance, before packaging, before store submission, before release, needs to judge "is the requirement itself right", needs a comprehensive six-layer audit, **or wants to plug the audit into an existing dev loop (incremental after each change, or a gate before commit/release)**.
 - **Don't use**: needs real UI visual inspection, needs real execution regression, pure performance benchmarks, wants only a single dimension (call the corresponding specialized skill directly).
