@@ -121,6 +121,7 @@ Because dedicated skills (`llm-sast-scanner`, `code-auditor`, `ponytail-audit`, 
 ## Author & Feedback
 
 - **Author:** [kevinshi3200](https://github.com/kevinshi3200)
+- **Email:** [915538592@qq.com](mailto:915538592@qq.com)
 - **Issues / feedback / feature requests:** [open an issue](https://github.com/kevinshi3200/persona-auditor/issues)
 
 ## License
