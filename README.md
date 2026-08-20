@@ -51,19 +51,8 @@ Seven dimensions, dozens of checks — one table to show the coverage:
 3. **Exhaustive traversal** — equivalence classes + boundary values + orthogonal arrays to cover the full `persona × function × operation × state × timing` matrix without combinatorial explosion.
 4. **Persona simulation** — dispatch "digital persona" subagents (≤10), each walking the full code chain and predicting what its user would do, see, and misunderstand.
 5. **Extreme testing** — jailbreak/injection + concurrency/stress.
-6. **Six-layer specialized checks** — orchestrate existing skills (`llm-sast-scanner`, `code-auditor`, `ponytail-audit`, `code-reviewer`) plus two self-built checks: **release hygiene** and **wheel-reinvention audit**.
+6. **Six-layer specialized checks** — security, AI-smell, compliance, and general-correctness scans, plus two self-built checks: **release hygiene** and **wheel-reinvention audit**.
 7. **God's-eye attribution** — counterfactual reasoning that separates root causes from symptoms, and ranks them by impact.
-
-## Prerequisites
-
-The following skills are reused during the audit (loaded automatically; the corresponding layers fall back gracefully if one is missing):
-
-| Skill | Used for |
-|---|---|
-| `llm-sast-scanner` | 34-class security taint tracking |
-| `code-auditor` | AI-smell, software-copyright compliance, store-review gating |
-| `ponytail-audit` | over-engineering detection |
-| `code-reviewer` | general correctness / maintainability / performance |
 
 ## Installation
 
@@ -114,9 +103,6 @@ Deterministic. Code and state machines are deterministic, so it uses a bounded s
 
 **Does it change my code?**
 Not during the audit. After you confirm the report, the same agent fixes precisely per the report and verifies the symptom disappears.
-
-**Why doesn't it reimplement security/AI-smell checks?**
-Because dedicated skills (`llm-sast-scanner`, `code-auditor`, `ponytail-audit`, `code-reviewer`) already do those well. Persona Auditor orchestrates them and adds what they don't cover: **release hygiene** and **wheel-reinvention audit**.
 
 ## Author & Feedback
 
