@@ -1,74 +1,128 @@
-# 数字人审计员（Persona Auditor）
+# Persona Auditor
 
-> 从真实用户视角审计 AI 生成的代码，找出"你自己反复试验才能发现、甚至根本意识不到"的错误，归因成少数根因，让你精准修复。
+> Audit AI-generated code from the perspective of **real users** — surface the bugs you'd only discover through costly trial-and-error (or never notice at all), then collapse them into a handful of root causes so you **fix precisely, not patch blindly**.
+
+<p align="center">
+  <a href="https://github.com/kevinshi3200/persona-auditor/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://github.com/kevinshi3200/persona-auditor"><img src="https://img.shields.io/github/stars/kevinshi3200/persona-auditor?style=social" alt="GitHub stars"></a>
+  <a href="https://github.com/kevinshi3200/persona-auditor"><img src="https://img.shields.io/badge/type-agent--skill-8A2BE2.svg" alt="Type: agent skill"></a>
+</p>
 
 ---
 
-## 一句话
+## What it does
 
-AI 写的代码，**功能能跑、逻辑自洽，却反复卡在前置几步、改很多轮找不到根因**。数字人审计员从真实用户视角把它拆开，找出你花大代价反复试验才能发现、甚至根本意识不到的错误，归因成少数根因，让你**一次修对，而不是继续补丁式地瞎试**。
+AI-written code often **runs fine and is internally consistent**, yet real users keep getting stuck in the first few steps, and you keep patching without ever finding the root cause.
 
-## 它解决什么
+Persona Auditor tears it apart from a **real user's perspective**. It dispatches **"digital personas"** — subagents that each simulate a real user type — and has them exhaustively traverse every user path **on paper** (no execution, no clicking), so it finds errors that would otherwise surface only through expensive trial-and-error, or never surface at all.
 
-- **逻辑自洽 ≠ 好用**：每个函数单看都对，但用户一走真实流程就懵；
-- **改很多轮找不到根因**：卡一个点就补丁式地修，越修越乱，因为没有全局视角；
-- **有些错误你根本意识不到**：跨项目串台、状态残留、召回排序反了——这些藏在代码深处，只有把真实用户的完整路径走一遍才会浮现。
+Then it steps back to a **god's-eye view** and attributes dozens of symptoms to a **handful of root causes** — each with a precise `file:line` and a **falsifiable way to verify the fix**. The result: the agent fixes it right the first time, instead of continuing to patch blindly.
 
-## 它能检测什么（能力清单）
-
-七大维度，几十种检测，一张清单让你知道它覆盖多全：
-
-| 维度 | 具体检测 |
-|---|---|
-| 🧠 **逻辑与状态** | 逻辑矛盾、死分支、死锁、无限循环、状态污染、状态残留、前置依赖缺失、变量被意外改写、该校验却跳过、竞态条件 |
-| 👤 **用户体验** | "代码自洽但体验不对"的落差、认知负担过重、功能割裂、反馈缺失、"说"与"做"不同步、可发现性、可恢复性、信任建立、心智模型不一致、用户放弃点 |
-| 🔒 **安全漏洞** | SQL 注入、XSS、SSRF、IDOR、越权、命令注入、路径穿越、任意文件读、竞态、提示词注入、越狱（覆盖 34 类） |
-| 🤖 **AI 味与可维护** | 命名空洞、注释套路、过度抽象、异常吞噬、TODO 坟场、过度工程、重复造轮子、技术过时、不如成熟开源方案 |
-| 📋 **合规与发布** | 软著合规、商店审核门控、EULA/版权声明缺失、密钥泄露、真实个人信息泄露、内部信息/试错痕迹泄漏 |
-| ⚡ **并发与压力** | 多任务并发、竞态、超时、打断、重复提交、快速切换、多子代理冲突 |
-| 🔗 **跨项目** | 跨项目记忆串台、精准跳转、动态记忆池、跨域路由 |
-
-> 这些不是"都塞给你"，而是**按需触发**：审计时先问清"给谁用、上架哪里"，自动决定哪些维度适用、哪些跳过（不上架就不报商店审核，桌面端不报移动 App，避免误报）。
-
-## 它怎么工作
-
-1. **问答门**：先问清"给谁用、设计初衷、上架哪里"——不脑补；
-2. **轻调研**：搜真实用户痛点，校准画像；
-3. **数字人推演**：派"数字人"子代理，每个扮演一类真实用户，沿完整代码链路逐条核对，预测用户会怎么想、怎么做、卡在哪；
-4. **上帝视角归因**：所有数字人推演完，用反事实验证，把几十个症状归因成少数几个根因，每条根因带精确 `文件:行号` 和"怎么验证它修好了"。
-
-**审计 → 报告（根因+位置）→ 用户确认 → agent 精准修复 → 验证症状消失**。审计不改代码（不污染现场），但它的目的就是让你精准修复，不是"审完就完了"。
-
-## 和现有方案的区别
-
-| | 真实点击测试 | 代码审查 | 数字人审计员 |
-|---|---|---|---|
-| 视角 | 机器操作 | 代码逻辑 | **真实用户** |
-| 找什么 | 运行时 bug | 代码质量 | **"代码自洽但体验不对"的矛盾 + 你意识不到的错误** |
-| 根因 | 单点 | 单点 | **上帝视角反事实归因（少数根因）** |
-| 成本 | 贵（token+时间） | 便宜但单点 | **便宜 + 全局 + 可证伪** |
-
-## 安装
-
-```bash
-# vercel-labs/skills 生态（Claude Code / Codex / Cursor 等 70+ agent）
-npx skills add <你的用户名>/persona-auditor
-
-# 或手动：把 SKILL.md 放到 agent 的 skills 目录
+```
+audit → report (root cause + location) → user confirms → agent fixes → verify the symptom disappears
 ```
 
-## 触发
+## Why it exists
 
-对 agent 说："用数字人审计员审计这个项目" / "审计 / 找 bug / 推演 / 验收 / 出包前检查"。
+- **Self-consistent ≠ usable.** Every function looks right in isolation, but the moment a real user walks the full journey, it falls apart.
+- **Many rounds, no root cause.** You patch one point after another, making it worse, because there's no global view.
+- **Some bugs you'd never notice.** Cross-project contamination, stale state, reversed recall ranking — these hide deep in the code and only surface when a real user walks the full path.
 
-## 能力边界（诚实声明）
+## What it detects
 
-**擅长**：逻辑矛盾、流程卡死、状态污染、体验层落差、跨项目串台、并发竞态、越狱穿透、发布卫生、造轮子——"只有真人测试才逐步显露、甚至意识不到"的问题。
+Seven dimensions, dozens of checks — one table to show the coverage:
 
-**审计阶段只读**：不改代码（不污染现场），但它产出的是"少数根因 + 精确位置 + 可证伪验证方法"，**用户确认后，交给同一个 agent 按报告精准修复**。
+| Dimension | What it detects |
+|---|---|
+| 🧠 **Logic & state** | logic contradictions, dead branches, deadlock, infinite loops, state pollution, stale state, missing preconditions, variables accidentally overwritten, checks skipped, race conditions |
+| 👤 **User experience** | the "self-consistent but experience-wrong" gap, cognitive overload, feature fragmentation, missing feedback, "says vs does" mismatch, discoverability, recoverability, trust building, mental-model mismatch, abandonment points |
+| 🔒 **Security** | SQL injection, XSS, SSRF, IDOR, privilege escalation, command injection, path traversal, arbitrary file read, races, prompt injection, jailbreak (34 classes) |
+| 🤖 **AI-smell & maintainability** | naming emptiness, comment clichés, over-abstraction, swallowed exceptions, TODO graveyard, over-engineering, reinvented wheels, outdated tech, worse-than-mature-OSS |
+| 📋 **Compliance & release** | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal info / trial-and-error traces leaked |
+| ⚡ **Concurrency & stress** | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
+| 🔗 **Cross-project** | cross-project memory contamination, precise navigation, dynamic memory pool, cross-domain routing |
 
-**不能替代**：不能读二进制/逆向、不能替代真实 UI 视觉检查、不能替代真实执行回归。它是"定位 + 大局观"的审计工具，修复由 agent 在用户确认后执行。
+> These are **triggered on demand, not dumped on you.** The audit first asks "who is it for, where does it ship", and automatically decides which dimensions apply and which to skip — no store review for something not shipping, no mobile App Store review for a desktop app. Fewer false positives.
+
+## How it works
+
+1. **Intake gate** — ask who it's for, the design intent, and where it ships. Never guess.
+2. **Light research** — search real users' pain points to calibrate the personas against reality.
+3. **Exhaustive traversal** — equivalence classes + boundary values + orthogonal arrays to cover the full `persona × function × operation × state × timing` matrix without combinatorial explosion.
+4. **Persona simulation** — dispatch "digital persona" subagents (≤10), each walking the full code chain and predicting what its user would do, see, and misunderstand.
+5. **Extreme testing** — jailbreak/injection + concurrency/stress.
+6. **Six-layer specialized checks** — orchestrate existing skills (`llm-sast-scanner`, `code-auditor`, `ponytail-audit`, `code-reviewer`) plus two self-built checks: **release hygiene** and **wheel-reinvention audit**.
+7. **God's-eye attribution** — counterfactual reasoning that separates root causes from symptoms, and ranks them by impact.
+
+## Prerequisites
+
+The following skills are reused during the audit (loaded automatically; the corresponding layers fall back gracefully if one is missing):
+
+| Skill | Used for |
+|---|---|
+| `llm-sast-scanner` | 34-class security taint tracking |
+| `code-auditor` | AI-smell, software-copyright compliance, store-review gating |
+| `ponytail-audit` | over-engineering detection |
+| `code-reviewer` | general correctness / maintainability / performance |
+
+## Installation
+
+```bash
+# skills ecosystem (Claude Code / Codex / Cursor / other agents)
+npx skills add kevinshi3200/persona-auditor
+
+# or manual: copy SKILL.md into your agent's skills directory
+# e.g. ~/.agents/skills/persona-auditor/SKILL.md
+```
+
+## Usage
+
+Trigger it with natural language:
+
+> "Audit this project with Persona Auditor."
+> "审计这个项目" / "找 bug" / "推演" / "验收" / "出包前检查"
+
+**What it asks you (intake gate):** who it's for, what each feature is *meant* to feel like, and where it ships (App Store / Google Play / direct download / not shipping). Only the parts that apply are checked — so a personal, unshipped project skips compliance and store-review checks entirely.
+
+**What it produces:** a six-layer report whose conclusion is **a few root causes + impact-ranked fix directions** (each with `file:line` and a falsifiable verification method) — not dozens of symptoms laid flat.
+
+## How it compares
+
+| | Real click testing | Code review | **Persona Auditor** |
+|---|---|---|---|
+| Perspective | machine operations | code logic | **real users** |
+| Finds | runtime bugs | code quality | **"self-consistent but experience-wrong" gaps + bugs you'd never notice** |
+| Root cause | single point | single point | **god's-eye counterfactual attribution (a few root causes)** |
+| Cost | expensive (tokens + time) | cheap but single-point | **cheap + global + falsifiable** |
+
+## Limitations
+
+- **Read-only during the audit** — it never modifies code (to avoid contaminating the scene). Fixing happens in the loop, *after you confirm*.
+- **Cannot** read binaries / reverse-engineer, replace real UI visual inspection, or replace real execution regression.
+- Paper traversal surfaces *specification-layer* contradictions; if actual runtime behavior differs from what the code implies, that gap is flagged and fed back into the model.
+
+## FAQ
+
+**Does it just "save tokens by not executing"?**
+No. "Not executing" is the *means* (cheap exhaustive traversal), not the value. The value is **precise fixing** — it finds errors you'd only discover through costly trial-and-error (or never), attributes them to a few root causes, and hands the agent a falsifiable fix plan.
+
+**Will it drown me in findings?**
+No. Checks are triggered on demand based on your release scenario, and the final report converges to **a few root causes ranked by impact**, not a wall of symptoms.
+
+**Is it deterministic, or another "swarm" simulation?**
+Deterministic. Code and state machines are deterministic, so it uses a bounded set of personas (≤10, one per persona combo) — not thousands of chaotic agents.
+
+**Does it change my code?**
+Not during the audit. After you confirm the report, the same agent fixes precisely per the report and verifies the symptom disappears.
+
+**Why doesn't it reimplement security/AI-smell checks?**
+Because dedicated skills (`llm-sast-scanner`, `code-auditor`, `ponytail-audit`, `code-reviewer`) already do those well. Persona Auditor orchestrates them and adds what they don't cover: **release hygiene** and **wheel-reinvention audit**.
+
+## Author & Feedback
+
+- **Author:** [kevinshi3200](https://github.com/kevinshi3200)
+- **Issues / feedback / feature requests:** [open an issue](https://github.com/kevinshi3200/persona-auditor/issues)
 
 ## License
 
-MIT
+[MIT](./LICENSE)
