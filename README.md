@@ -1,32 +1,60 @@
 # Persona Auditor
 
-> Audit AI-generated code from the perspective of **real users** — surface the bugs you'd only discover through costly trial-and-error (or never notice at all), then collapse them into a handful of root causes so you **fix precisely, not patch blindly**.
+<div align="center">
 
-<p align="center">
-  <a href="https://github.com/kevinshi3200/persona-auditor/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/kevinshi3200/persona-auditor"><img src="https://img.shields.io/github/stars/kevinshi3200/persona-auditor?style=social" alt="GitHub stars"></a>
-  <a href="https://github.com/kevinshi3200/persona-auditor"><img src="https://img.shields.io/badge/type-agent--skill-8A2BE2.svg" alt="Type: agent skill"></a>
-</p>
+**Find the bugs real users hit that you'd only discover through costly trial-and-error — or never notice at all — and collapse them into a handful of root causes, so your agent fixes precisely instead of patching blindly.**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Type: agent skill](https://img.shields.io/badge/type-agent--skill-8A2BE2.svg)](https://github.com/kevinshi3200/persona-auditor)
+
+</div>
 
 ---
 
-## What it does
+## TL;DR
 
-AI-written code often **runs fine and is internally consistent**, yet real users keep getting stuck in the first few steps, and you keep patching without ever finding the root cause.
+### The Problem
 
-Persona Auditor tears it apart from a **real user's perspective**. It dispatches **"digital personas"** — subagents that each simulate a real user type — and has them exhaustively traverse every user path **on paper** (no execution, no clicking), so it finds errors that would otherwise surface only through expensive trial-and-error, or never surface at all.
+AI writes code that **runs fine and is internally consistent** — but the moment a real user walks the journey, it falls apart:
 
-Then it steps back to a **god's-eye view** and attributes dozens of symptoms to a **handful of root causes** — each with a precise `file:line` and a **falsifiable way to verify the fix**. The result: the agent fixes it right the first time, instead of continuing to patch blindly.
+- **Users get stuck in the first few steps**, even though every function looks correct in isolation.
+- **You patch one point after another, for many rounds, and never find the root cause** — because each fix only sees a local symptom.
+- Worst of all: **some bugs you'd never notice at all.** Cross-project contamination, stale state, reversed recall ranking — they hide deep in the code and only surface when a *real user* walks the *full path*.
+
+### The Solution
+
+Persona Auditor dispatches **"digital personas"** — subagents that each play a real user type — and has them **exhaustively traverse every user path on paper** (no execution, no clicking: cheaper and more global than real clicking). Then it steps back to a **god's-eye view** and attributes dozens of symptoms to **a few root causes**, each with a precise `file:line` and a **falsifiable way to verify the fix**.
 
 ```
-audit → report (root cause + location) → user confirms → agent fixes → verify the symptom disappears
+audit → report (root cause + location) → you confirm → agent fixes → verify the symptom disappears
 ```
 
-## Why it exists
+### Why Persona Auditor?
 
-- **Self-consistent ≠ usable.** Every function looks right in isolation, but the moment a real user walks the full journey, it falls apart.
-- **Many rounds, no root cause.** You patch one point after another, making it worse, because there's no global view.
-- **Some bugs you'd never notice.** Cross-project contamination, stale state, reversed recall ranking — these hide deep in the code and only surface when a real user walks the full path.
+| Strength | What it means for you |
+|---|---|
+| 🎭 **Real-user perspective** | Simulates *people*, not machine operations, not code logic |
+| 👁️ **Finds what you'd never notice** | Hunts "self-consistent but experience-wrong" gaps, not just runtime bugs |
+| 🎯 **God's-eye attribution** | Counterfactual reasoning collapses dozens of symptoms into a few root causes — each falsifiable |
+| 🧮 **Exhaustive, not sampled** | Equivalence classes + boundary values + orthogonal arrays guarantee no missed combination, with a provable coverage count |
+| 🎲 **Deterministic, not a swarm** | Bounded personas (≤10), reproducible — not thousands of chaotic agents |
+| 🔄 **Fix loop, not a report** | Ends in precise fixing + verification, not "audit done, good luck" |
+| 🧹 **Release hygiene** *(exclusive)* | Catches AI's signature disease: secrets, PII, and trial-and-error traces written into code |
+| 🔍 **Wheel-reinvention audit** *(exclusive)* | Flags hand-rolled modules that a mature open-source library already beats |
+| ⚖️ **Adapts to the project** | Lite / Standard / Deep — a landing page doesn't get a heavyweight audit |
+| 🔌 **Plugs into your loop** | One-shot, incremental-after-each-change, or a gate before commit/release |
+
+---
+
+## Design Philosophy
+
+1. **Paper traversal is the means, not the end.** "Not executing, not clicking" is how we *cheaply exhaust every path* — faster and more global than real clicking. The end goal is **precise fixing**, never "saving tokens".
+2. **Exhaustiveness is the soul; sampling is negligence.** One happy path proves nothing. The full `persona × function × operation × state × timing` matrix is traversed, with coverage quantified and provable.
+3. **Code is the single source of truth.** We reason from the behavior recovered by *reading the code*, not from docs or memory.
+4. **Deterministic, not chaotic.** Code and state machines are deterministic, so the simulation is deterministic too — a bounded set of personas, reproducible results.
+5. **Falsifiable or it isn't a finding.** Every root cause must carry a verification path ("if I fix X, symptom Y disappears"). No verification path = downgraded to "impression", never reported as a conclusion.
+
+---
 
 ## What it detects
 
@@ -42,19 +70,20 @@ Seven dimensions, dozens of checks — one table to show the coverage:
 | ⚡ **Concurrency & stress** | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
 | 🔗 **Cross-project** | cross-project memory contamination, precise navigation, dynamic memory pool, cross-domain routing |
 
-> These are **triggered on demand, not dumped on you.** The audit first asks "who is it for, where does it ship", and automatically decides which dimensions apply and which to skip — no store review for something not shipping, no mobile App Store review for a desktop app. Fewer false positives.
+> Checks are **triggered on demand, not dumped on you.** The audit first asks "who is it for, where does it ship" and skips what doesn't apply — no store review for something not shipping, no mobile App Store review for a desktop app.
+
+---
 
 ## How it works
 
-1. **Intake gate** — ask who it's for, the design intent, and where it ships. Never guess.
-2. **Light research** — search real users' pain points to calibrate the personas against reality.
-3. **Exhaustive traversal** — equivalence classes + boundary values + orthogonal arrays to cover the full `persona × function × operation × state × timing` matrix without combinatorial explosion.
-4. **Persona simulation** — dispatch "digital persona" subagents (≤10), each walking the full code chain and predicting what its user would do, see, and misunderstand.
-5. **Extreme testing** — jailbreak/injection + concurrency/stress.
-6. **Six-layer specialized checks** — security, AI-smell, compliance, and general-correctness scans, plus two self-built checks: **release hygiene** and **wheel-reinvention audit**.
-7. **God's-eye attribution** — counterfactual reasoning that separates root causes from symptoms, and ranks them by impact.
+1. **Intake** — the agent infers the project type, users, and release scenario from code, then asks you only what code *can't* tell it (design intent, real user pain points, release decision).
+2. **Exhaustive traversal** — equivalence classes + boundary values + orthogonal arrays cover the full path matrix without combinatorial explosion.
+3. **Persona simulation** — digital-persona subagents (≤10) each walk the full code chain, predicting what their user would do, see, and misunderstand.
+4. **God's-eye attribution** — counterfactual reasoning separates root causes from symptoms and ranks them by impact.
 
-## Installation
+---
+
+## Quick Start
 
 ```bash
 # skills ecosystem (Claude Code / Codex / Cursor / other agents)
@@ -64,31 +93,34 @@ npx skills add kevinshi3200/persona-auditor
 # e.g. ~/.agents/skills/persona-auditor/SKILL.md
 ```
 
-## Usage
-
-Trigger it with natural language:
+Then trigger it in natural language:
 
 > "Audit this project with Persona Auditor."
 > "审计这个项目" / "找 bug" / "推演" / "验收" / "出包前检查"
 
-**What it asks you (intake gate):** who it's for, what each feature is *meant* to feel like, and where it ships (App Store / Google Play / direct download / not shipping). Only the parts that apply are checked — so a personal, unshipped project skips compliance and store-review checks entirely.
+**What you get:** a report whose conclusion is **a few root causes + impact-ranked fix directions** — each with `file:line` and a falsifiable verification method — not dozens of symptoms laid flat.
 
-**What it produces:** a six-layer report whose conclusion is **a few root causes + impact-ranked fix directions** (each with `file:line` and a falsifiable verification method) — not dozens of symptoms laid flat.
+---
 
 ## How it compares
 
-| | Real click testing | Code review | **Persona Auditor** |
-|---|---|---|---|
-| Perspective | machine operations | code logic | **real users** |
-| Finds | runtime bugs | code quality | **"self-consistent but experience-wrong" gaps + bugs you'd never notice** |
-| Root cause | single point | single point | **god's-eye counterfactual attribution (a few root causes)** |
-| Cost | expensive (tokens + time) | cheap but single-point | **cheap + global + falsifiable** |
+| | Code review | E2E / click testing | Swarm simulation | **Persona Auditor** |
+|---|---|---|---|---|
+| Perspective | code logic | machine operations | emergent agents | **real users** |
+| Finds | code quality | runtime bugs | unpredictable | **"self-consistent but experience-wrong" gaps + bugs you'd never notice** |
+| Root cause | single point | single point | unclear | **god's-eye counterfactual attribution (a few root causes)** |
+| Coverage | sampled | one path at a time | chaotic | **exhaustive, provable coverage** |
+| Cost | cheap, shallow | expensive | token-explosive | **cheap + global + reproducible** |
+
+---
 
 ## Limitations
 
 - **Read-only during the audit** — it never modifies code (to avoid contaminating the scene). Fixing happens in the loop, *after you confirm*.
 - **Cannot** read binaries / reverse-engineer, replace real UI visual inspection, or replace real execution regression.
 - Paper traversal surfaces *specification-layer* contradictions; if actual runtime behavior differs from what the code implies, that gap is flagged and fed back into the model.
+
+---
 
 ## FAQ
 
@@ -99,10 +131,15 @@ No. "Not executing" is the *means* (cheap exhaustive traversal), not the value. 
 No. Checks are triggered on demand based on your release scenario, and the final report converges to **a few root causes ranked by impact**, not a wall of symptoms.
 
 **Is it deterministic, or another "swarm" simulation?**
-Deterministic. Code and state machines are deterministic, so it uses a bounded set of personas (≤10, one per persona combo) — not thousands of chaotic agents.
+Deterministic. Code and state machines are deterministic, so it uses a bounded set of personas (≤10, one per persona combo) — reproducible, token-controlled.
 
 **Does it change my code?**
 Not during the audit. After you confirm the report, the same agent fixes precisely per the report and verifies the symptom disappears.
+
+**Does it do a heavy audit on a tiny project?**
+No. It picks a depth tier — 🟢 Lite for a landing page / personal tool, 🟡 Standard for most projects, 🔴 Deep for store shipping / sensitive data / agent systems — and only runs what the project needs.
+
+---
 
 ## Author & Feedback
 
