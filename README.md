@@ -4,6 +4,8 @@
 
 **Find the bugs real users hit that you'd only discover through costly trial-and-error — or never notice at all — and collapse them into a handful of root causes, so your agent fixes precisely instead of patching blindly.**
 
+从真实用户视角审计 AI 代码，找出你反复试验才能发现、甚至永远发现不了的错误，归因成少数根因，**一次修对**。
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Type: agent skill](https://img.shields.io/badge/type-agent--skill-8A2BE2.svg)](https://github.com/kevinshi3200/persona-auditor)
 [![skills.sh](https://skills.sh/b/kevinshi3200/persona-auditor)](https://skills.sh/b/kevinshi3200/persona-auditor)
