@@ -38,7 +38,7 @@ audit → report (root cause + location) → you confirm → agent fixes → ver
 | 👁️ **Finds what you'd never notice** | Hunts "self-consistent but experience-wrong" gaps, not just runtime bugs |
 | 🎯 **God's-eye attribution** | Counterfactual reasoning collapses dozens of symptoms into a few root causes — each falsifiable |
 | 🧮 **Exhaustive, not sampled** | Equivalence classes + boundary values + orthogonal arrays guarantee no missed combination, with a provable coverage count |
-| 🎲 **Deterministic, not a swarm** | Bounded personas (≤10), reproducible — not thousands of chaotic agents |
+| 🎲 **Deterministic & reproducible** | A bounded set of personas — same input, same output, no chaotic surprises |
 | 🔄 **Fix loop, not a report** | Ends in precise fixing + verification, not "audit done, good luck" |
 | 🧹 **Release hygiene** *(exclusive)* | Catches AI's signature disease: secrets, PII, and trial-and-error traces written into code |
 | 🔍 **Wheel-reinvention audit** *(exclusive)* | Flags hand-rolled modules that a mature open-source library already beats |
@@ -49,7 +49,7 @@ audit → report (root cause + location) → you confirm → agent fixes → ver
 
 ## Design Philosophy
 
-1. **Paper traversal is the means, not the end.** "Not executing, not clicking" is how we *cheaply exhaust every path* — faster and more global than real clicking. The end goal is **precise fixing**, never "saving tokens".
+1. **Paper traversal is the means, not the end.** "Not executing, not clicking" is how we *exhaust every path* — faster and more global than real clicking. The end goal is **precise fixing** — finding the few root causes so you fix once, not patch forever.
 2. **Exhaustiveness is the soul; sampling is negligence.** One happy path proves nothing. The full `persona × function × operation × state × timing` matrix is traversed, with coverage quantified and provable.
 3. **Code is the single source of truth.** We reason from the behavior recovered by *reading the code*, not from docs or memory.
 4. **Deterministic, not chaotic.** Code and state machines are deterministic, so the simulation is deterministic too — a bounded set of personas, reproducible results.
@@ -105,13 +105,13 @@ Then trigger it in natural language:
 
 ## How it compares
 
-| | Code review | E2E / click testing | Swarm simulation | **Persona Auditor** |
+| | Code review | E2E / click testing | Chaotic multi-agent | **Persona Auditor** |
 |---|---|---|---|---|
 | Perspective | code logic | machine operations | emergent agents | **real users** |
 | Finds | code quality | runtime bugs | unpredictable | **"self-consistent but experience-wrong" gaps + bugs you'd never notice** |
 | Root cause | single point | single point | unclear | **god's-eye counterfactual attribution (a few root causes)** |
 | Coverage | sampled | one path at a time | chaotic | **exhaustive, provable coverage** |
-| Cost | cheap, shallow | expensive | token-explosive | **cheap + global + reproducible** |
+| Cost | cheap, shallow | expensive | unpredictable | **cheap + global + reproducible** |
 
 ---
 
@@ -125,14 +125,11 @@ Then trigger it in natural language:
 
 ## FAQ
 
-**Does it just "save tokens by not executing"?**
-No. "Not executing" is the *means* (cheap exhaustive traversal), not the value. The value is **precise fixing** — it finds errors you'd only discover through costly trial-and-error (or never), attributes them to a few root causes, and hands the agent a falsifiable fix plan.
-
 **Will it drown me in findings?**
 No. Checks are triggered on demand based on your release scenario, and the final report converges to **a few root causes ranked by impact**, not a wall of symptoms.
 
-**Is it deterministic, or another "swarm" simulation?**
-Deterministic. Code and state machines are deterministic, so it uses a bounded set of personas (≤10, one per persona combo) — reproducible, token-controlled.
+**Is it deterministic, or another chaotic multi-agent simulation?**
+Deterministic. Code and state machines are deterministic, so it uses a bounded set of personas (≤10, one per persona combo) — reproducible and predictable.
 
 **Does it change my code?**
 Not during the audit. After you confirm the report, the same agent fixes precisely per the report and verifies the symptom disappears.
