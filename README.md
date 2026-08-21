@@ -6,6 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Type: agent skill](https://img.shields.io/badge/type-agent--skill-8A2BE2.svg)](https://github.com/kevinshi3200/persona-auditor)
+[![skills.sh](https://skills.sh/b/kevinshi3200/persona-auditor)](https://skills.sh/b/kevinshi3200/persona-auditor)
 
 </div>
 
