@@ -1,6 +1,6 @@
 # Promotion Copy · Persona Auditor
 
-提炼后的推广文案（面向真实用户，不含内部实现细节）。按平台取用。
+按平台取用。
 
 ---
 
