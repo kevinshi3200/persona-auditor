@@ -57,6 +57,10 @@ trigger:
   - store review
   - secret leakage
   - release hygiene
+  - defensive content pollution
+  - guardrail leakage
+  - internal metadata leak
+  - self-reminder leakage
   - cross-project contamination
   - dynamic memory pool
   - 逻辑矛盾
@@ -84,6 +88,10 @@ trigger:
   - 商店审核
   - 密钥泄露
   - 发布卫生
+  - 防御性内容污染
+  - 纠正泄漏
+  - 内部备注泄漏
+  - 自我提醒泄漏
   - 跨项目串台
   - 动态记忆池
 ---
@@ -281,6 +289,32 @@ Duplicates go to the more specialized one; dedupe then merge. **Before reporting
 
 For each hit, tag `【release hygiene】+ file:line + content category + leak level`, and list it separately in the report. **This is not in any existing skill's scope — this skill covers it exclusively.**
 
+### 6b. Defensive-content pollution (new dimension — sibling of release hygiene)
+
+**The disease**: AI wrote its *internal* guardrail metadata — corrections, risk warnings, discipline clauses, self-reminders, "as an AI" disclaimers — straight into an artifact that is meant to be public. The artifact stops being universal: a marketing copy with "⚠️ needs verification" can't be published; open-source code with "// untested, don't trust this" can't be shipped.
+
+**How it differs from release hygiene**: release hygiene leaks *past* dev traces (secrets, PII, trial-and-error); this leaks the *current* artifact's own defense notes. Same root cause, different symptom — a public deliverable and its internal guardrail metadata were not physically separated.
+
+**The three-question test** (apply to every suspicious sentence / comment):
+1. **Meta or content?** Is this sentence *about* the artifact (its own correctness / trust / status), or *is* it the artifact (the actual copy / code / doc)?
+2. **Who is it addressed to?** To the *producer* ("note to self", "for internal review", "remind me") — or to the *end user*?
+3. **Deletion test (falsifiable)**: delete it — is the artifact still complete and *more* universal? If yes, it was internal metadata and must be reported.
+
+**Signals to scan for**:
+- Explicit guard markers: `⚠️` / `【备注】` / `【纪律】` / risk warning / disclaimer / "AI-generated, please verify"
+- Self-reminder speech: "as an AI I remind you", "please verify", "not tested", "don't ship", "for reference only", "does not constitute advice"
+- Code self-notes: `TODO` / `FIXME` / `HACK` / `// note to self` / `// this broke before, don't touch`
+- Leaked internal correction: "this was wrong before", "temporary", "for now", "internal wording", "internal decision"
+
+**Severity**:
+- **High**: the defensive content makes the artifact unpublishable (whole paragraphs of caveats in public copy; public code full of internal warnings).
+- **Medium**: local contamination (a few lines / comments).
+- **Low**: deliberate compliance disclaimer (e.g. a financial-risk disclaimer) — flag it, but don't assume it's a bug.
+
+**Root cause (god's-eye)**: guardrail metadata was not physically separated from the deliverable. Triggers: ① guardrail tools set to `on_fail="fix"` rewriting the text in place; ② prompts telling the model to "self-correct" without distinguishing internal vs external; ③ internal discussion leaking into context and getting copied into the output.
+
+**Fix direction (for the report, not the audit)**: two-layer output (draft vs `public_release`), a `product_mode` parameter, and defense metadata routed to a side channel (logs / review queue) — never injected into the payload. The audit's job is to *detect* the leak and point at its root cause, not to redesign the pipeline.
+
 ### Step 7: Wheel-reinvention audit (self-built differentiator, mandatory)
 
 **Find "this whole module has a more mature open-source alternative, but you hand-rolled an outdated one."**
@@ -366,7 +400,7 @@ Every defect uniformly carries: `trigger sequence → expected vs actual → roo
 | 👤 User experience | the "self-consistent but experience-wrong" gap, cognitive overload, feature fragmentation, missing feedback, "says vs does" mismatch, discoverability, recoverability, trust building, mental-model mismatch, abandonment points |
 | 🔒 Security | SQL injection, XSS, SSRF, IDOR, privilege escalation, command injection, path traversal, arbitrary file read, races, prompt injection, jailbreak (34 classes) |
 | 🤖 AI-smell & maintainability | naming emptiness, comment clichés, over-abstraction, swallowed exceptions, TODO graveyard, over-engineering, reinvented wheels, outdated tech, worse-than-mature-OSS |
-| 📋 Compliance & release | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal info / trial-and-error traces leaked |
+| 📋 Compliance & release | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal info / trial-and-error traces leaked, **defensive-content pollution** (corrections / risk warnings / discipline / self-reminders leaked into public deliverables) |
 | ⚡ Concurrency & stress | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
 | 🔗 Cross-project | cross-project memory contamination, precise navigation, dynamic memory pool, cross-domain routing |
 
