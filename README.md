@@ -22,7 +22,7 @@ AI writes code that **runs fine and is internally consistent** — but the momen
 
 - **Users get stuck in the first few steps**, even though every function looks correct in isolation.
 - **You patch one point after another, for many rounds, and never find the root cause** — because each fix only sees a local symptom.
-- Worst of all: **some bugs you'd never notice at all.** Cross-project contamination, stale state, reversed recall ranking — they hide deep in the code and only surface when a *real user* walks the *full path*.
+- Worst of all: **some bugs you'd never notice at all.** Cross-project contamination, stale state, wrong sort order — they hide deep in the code and only surface when a *real user* walks the *full path*.
 
 ### The Solution
 
@@ -69,7 +69,7 @@ Seven dimensions, dozens of checks — one table to show the coverage:
 | 👤 **User experience** | the "self-consistent but experience-wrong" gap, cognitive overload, feature fragmentation, missing feedback, "says vs does" mismatch, discoverability, recoverability, trust building, mental-model mismatch, abandonment points |
 | 🔒 **Security** | SQL injection, XSS, SSRF, IDOR, privilege escalation, command injection, path traversal, arbitrary file read, races, prompt injection, jailbreak (34 classes) |
 | 🤖 **AI-smell & maintainability** | naming emptiness, comment clichés, over-abstraction, swallowed exceptions, TODO graveyard, over-engineering, reinvented wheels, outdated tech, worse-than-mature-OSS |
-| 📋 **Compliance & release** | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal info / trial-and-error traces leaked |
+| 📋 **Compliance & release** | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal info / trial-and-error traces leaked, defensive-content pollution (corrections / warnings / self-reminders in public artifacts) |
 | ⚡ **Concurrency & stress** | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
 | 🔗 **Cross-project** | cross-project memory contamination, precise navigation, dynamic memory pool, cross-domain routing |
 
