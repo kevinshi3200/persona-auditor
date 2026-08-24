@@ -306,6 +306,18 @@ For each hit, tag `【release hygiene】+ file:line + content category + leak le
 - Code self-notes: `TODO` / `FIXME` / `HACK` / `// note to self` / `// this broke before, don't touch`
 - Leaked internal correction: "this was wrong before", "temporary", "for now", "internal wording", "internal decision"
 
+**Where to scan — five surfaces (breadth: not just chat and deliverables)**:
+
+Defensive pollution hides in *every* user-visible string, not only conversation replies and published files. Scan all five:
+
+1. **Conversation output** — `appendAssistant` / `finalText` / `appendBrief` / dialogue messages (covered above).
+2. **Deliverable files** — docs / code / config meant to be published or shipped (covered above; overlaps release hygiene).
+3. **Settings / config UI text** *(new surface)* — model pickers, tier labels, capability maps, degradation-matrix wording, parameter descriptions. Internal architecture terms shown to the user: "cortex / reflex", "升舱", "终审", "DS 主力 + K3 前端施工". Locate: `displayName` / `label` / `title` / `t(...)` in settings components and registry / archive files.
+4. **Runtime result display** *(new surface)* — status text, progress, result cards, quality-gate verdicts rendered in the UI. Internal QA terms leaking into what the user sees about their task. Locate: `statusText` / progress / verdict rendering.
+5. **Run log / notifications** *(new surface)* — notification center, toast, event timeline, log panel. Internal QA / process terms shown to the user as "history": "同品牌复核", "对抗性降档", "人工目检", "打回到顶", "如实标". Locate: `pushNotification` / toast / event feed / log lines that reach the UI.
+
+**Rule**: a term is internal if it names an architecture component ("cortex", "vision-premium", "层2"), a process step ("升舱", "终审", "复验握手"), or a producer-only concern ("省配额", "自己过一眼", "人工目检"). The same term is *not* pollution when the audience is an operator configuring the system (settings aimed at power users may legitimately name engines). Apply iron rule 8 (false-positive check): "end-user-facing text" vs "operator-facing text" are different audiences — only the former is pollution.
+
 **Severity**:
 - **High**: the defensive content makes the artifact unpublishable (whole paragraphs of caveats in public copy; public code full of internal warnings).
 - **Medium**: local contamination (a few lines / comments).
