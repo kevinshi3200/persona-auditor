@@ -26,7 +26,7 @@ AI writes code that **runs fine and is internally consistent** — but the momen
 
 ### The Solution
 
-Persona Auditor dispatches **"digital personas"** — subagents that each play a real user type — and has them **exhaustively traverse every user path on paper** (no execution, no clicking: cheaper and more global than real clicking). Then it steps back to a **god's-eye view** and attributes dozens of symptoms to **a few root causes**, each with a precise `file:line` and a **falsifiable way to verify the fix**.
+Persona Auditor first reads the code to map the project's **full structure** (every page / command / scenario), then dispatches **two layers of digital personas**: mechanical *walkers* that exhaustively traverse every user path on paper and record only code-verifiable facts (where it broke, at which `file:line`, in how many steps), plus an *intent observer* that weighs which breaks a human would most likely care about. Finally it steps back to a **god's-eye view** and attributes dozens of symptoms to **a few root causes**, each with a **falsifiable way to verify the fix**.
 
 ```
 audit → report (root cause + location) → you confirm → agent fixes → verify the symptom disappears
@@ -36,13 +36,15 @@ audit → report (root cause + location) → you confirm → agent fixes → ver
 
 | Strength | What it means for you |
 |---|---|
-| 🎭 **Real-user perspective** | Simulates *people*, not machine operations, not code logic |
+| 🎭 **Real-user perspective** | Walks journeys as *people* would — facts recorded by mechanical walkers, human weight added by an intent observer |
+| 🗺️ **Whole-project map first** | Reads code to list every page / command / scenario before dispatching — no blind path-picking |
 | 👁️ **Finds what you'd never notice** | Hunts "self-consistent but experience-wrong" gaps, not just runtime bugs |
 | 🎯 **God's-eye attribution** | Counterfactual reasoning collapses dozens of symptoms into a few root causes — each falsifiable |
 | 🧮 **Exhaustive, not sampled** | Equivalence classes + boundary values + orthogonal arrays guarantee no missed combination, with a provable coverage count |
+| ⚖️ **Facts vs opinions, separated** | Walkers record only falsifiable facts; opinions are tagged as hypotheses, never findings |
 | 🎲 **Deterministic & reproducible** | A bounded set of personas — same input, same output, no chaotic surprises |
 | 🔄 **Fix loop, not a report** | Ends in precise fixing + verification, not "audit done, good luck" |
-| 🧹 **Release hygiene** *(exclusive)* | Catches AI's signature disease: secrets, PII, and trial-and-error traces written into code |
+| 🧹 **Release hygiene + defensive pollution** *(exclusive)* | Catches AI's signature diseases: secrets / PII / trial-and-error traces written into code, *and* guardrail notes (⚠️ warnings, "don't ship" self-reminders) leaked into public artifacts |
 | 🔍 **Wheel-reinvention audit** *(exclusive)* | Flags hand-rolled modules that a mature open-source library already beats |
 | ⚖️ **Adapts to the project** | Lite / Standard / Deep — a landing page doesn't get a heavyweight audit |
 | 🔌 **Plugs into your loop** | One-shot, incremental-after-each-change, or a gate before commit/release |
@@ -55,7 +57,8 @@ audit → report (root cause + location) → you confirm → agent fixes → ver
 2. **Exhaustiveness is the soul; sampling is negligence.** One happy path proves nothing. The full `persona × function × operation × state × timing` matrix is traversed, with coverage quantified and provable.
 3. **Code is the single source of truth.** We reason from the behavior recovered by *reading the code*, not from docs or memory.
 4. **Deterministic, not chaotic.** Code and state machines are deterministic, so the simulation is deterministic too — a bounded set of personas, reproducible results.
-5. **Falsifiable or it isn't a finding.** Every root cause must carry a verification path ("if I fix X, symptom Y disappears"). No verification path = downgraded to "impression", never reported as a conclusion.
+5. **Facts and opinions are separated.** Walkers record only code-verifiable facts (broke at `file:line`, in N steps); the intent observer adds human-weighted *hypotheses*, explicitly tagged — never conflated with findings.
+6. **Falsifiable or it isn't a finding.** Every root cause must carry a verification path ("if I fix X, symptom Y disappears"). No verification path = downgraded to "impression", never reported as a conclusion.
 
 ---
 
@@ -71,7 +74,7 @@ Seven dimensions, dozens of checks — one table to show the coverage:
 | 🤖 **AI-smell & maintainability** | naming emptiness, comment clichés, over-abstraction, swallowed exceptions, TODO graveyard, over-engineering, reinvented wheels, outdated tech, worse-than-mature-OSS |
 | 📋 **Compliance & release** | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal info / trial-and-error traces leaked, defensive-content pollution (corrections / warnings / self-reminders in public artifacts) |
 | ⚡ **Concurrency & stress** | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
-| 🔗 **Cross-project** | cross-project memory contamination, precise navigation, dynamic memory pool, cross-domain routing |
+| 🔗 **Cross-scenario** | cross-scenario contamination, precise switching, memory/state recall correctness, cross-module routing |
 
 > Checks are **triggered on demand, not dumped on you.** The audit first asks "who is it for, where does it ship" and skips what doesn't apply — no store review for something not shipping, no mobile App Store review for a desktop app.
 
@@ -80,9 +83,11 @@ Seven dimensions, dozens of checks — one table to show the coverage:
 ## How it works
 
 1. **Intake** — the agent infers the project type, users, and release scenario from code, then asks you only what code *can't* tell it (design intent, real user pain points, release decision).
-2. **Exhaustive traversal** — equivalence classes + boundary values + orthogonal arrays cover the full path matrix without combinatorial explosion.
-3. **Persona simulation** — digital-persona subagents (≤10) each walk the full code chain, predicting what their user would do, see, and misunderstand.
-4. **God's-eye attribution** — counterfactual reasoning separates root causes from symptoms and ranks them by impact.
+2. **Project map** — reads the code to list every page / command / scenario and its core journeys, so nothing is left to guesswork.
+3. **Exhaustive traversal** — equivalence classes + boundary values + orthogonal arrays cover the full path matrix without combinatorial explosion.
+4. **Two-layer personas** — mechanical *walkers* record only facts (broke at `file:line`, in N steps, and whether it's an intended gate or an accidental break); an *intent observer* adds human-weighted hypotheses.
+5. **Six-layer checks** — security, AI-smell, release hygiene, defensive-content pollution, wheel reinvention, plus three-way alignment.
+6. **God's-eye attribution** — counterfactual reasoning separates root causes from symptoms and ranks them by impact.
 
 ---
 
