@@ -62,7 +62,6 @@ trigger:
   - internal metadata leak
   - self-reminder leakage
   - cross-project contamination
-  - dynamic memory pool
   - 逻辑矛盾
   - 死循环
   - 死锁
@@ -93,50 +92,48 @@ trigger:
   - 内部备注泄漏
   - 自我提醒泄漏
   - 跨项目串台
-  - 动态记忆池
 ---
 
 # Persona Auditor（数字人审计员）
 
 ## 1. Positioning & Iron Rules
 
-**Positioning**: a **comprehensive audit-orchestration skill** whose goal is **precise fixing** — find the errors the user would only discover through costly trial-and-error (or never notice at all), collapse them into a handful of root causes, and let the agent fix it right the first time. Three legs:
+**Positioning**: a **comprehensive audit-orchestration skill** whose goal is **precise fixing** — find the errors the user would only discover through costly trial-and-error (or never notice at all), collapse them into a handful of root causes, and let the agent fix it right the first time. It is built from four parts:
 
-1. **Main line (the differentiator)**: user personas → state-machine exhaustion → persona simulation → experience-layer three-way alignment → reference group → god's-eye attribution. It hunts the "contradiction between underlying logic and user experience" — built for "stuck on one point across many rounds of fixes, missing the global view".
+1. **Main line (the differentiator)**: user personas → project structure map → state-machine exhaustion → two-layer persona traversal → experience-layer three-way alignment → reference group → god's-eye attribution. It hunts the "contradiction between underlying logic and user experience" — built for "stuck on one point across many rounds of fixes, missing the global view".
 2. **Orchestrated reuse (don't reinvent)**: for security / AI-smell / over-engineering / store review / general correctness, load and run existing skills and merge their results into one unified report.
-3. **Two self-built checks (not covered by any existing skill)**:
-   - **Release hygiene**: an AI-assisted-development disease — development trial-and-error, conversations, summary conclusions, real personal information, secrets, and internal decisions written into code / config / comments / docs.
-   - **Wheel-reinvention audit**: find "this whole module has a more mature open-source alternative, but you hand-rolled an outdated one" — search and compare, then ask the user whether to replace.
+3. **Self-built checks (not covered by any existing skill)**:
+   - **Release hygiene**: development trial-and-error, conversations, summary conclusions, real personal information, secrets, and internal decisions written into code / config / comments / docs.
+   - **Defensive-content pollution**: guardrail metadata (corrections, risk warnings, discipline, self-reminders) leaked into public deliverables and user-visible strings.
+   - **Wheel-reinvention audit**: "this whole module has a more mature open-source alternative, but you hand-rolled an outdated one".
+4. **Adaptive scope**: depth tiers (Lite/Standard/Deep) and loop modes (one-shot/incremental/gate) so the audit weight matches the project, never over- or under-auditing.
 
 **Paper traversal is the means, not the end**: not executing, not clicking is how we *cheaply exhaust every user path* — faster, more global than real clicking, able to see root causes at a glance. **But it is never an excuse to "not fix"**: the audit's closed loop is `report (root cause + precise location) → user confirms → agent fixes precisely → verify via falsifiable check (symptom disappears)`.
 
-**Iron rules**:
+**Iron rules** (9, not a wall — each one earns its place):
 1. **Do not execute code, do not really click, do not modify code** — mainline work happens on paper.
 2. **Code is the single source of truth**: reason from the real behavior recovered by reading code, not from design docs or memory.
 3. **Do not fall into the "code self-consistency" trap**: internally consistent code ≠ a good product.
-4. **Exhaustiveness is the soul; sampling is negligence**: steps 2/3 must fully traverse the `persona × function × operation × state × timing` matrix; many persona subagents each reason independently; **only after traversing all paths may you do root-cause analysis**. Forbidden to sample one happy path and conclude.
+4. **Exhaustiveness is the soul; sampling is negligence**: steps 1.5/2/3 must fully traverse the `structure × persona × function × operation × state × timing` matrix; many walker subagents each reason independently; **only after traversing all paths may you do root-cause analysis**. Forbidden to sample one happy path and conclude.
 5. **Reuse first, don't reinvent**: for security / AI-smell / maintainability / review, load `llm-sast-scanner` / `code-auditor` / `ponytail-audit` / `code-reviewer`; do not rewrite their rules.
-6. **Release hygiene and wheel-reinvention audit are this skill's own checks — always run them, never skip.**
-7. **Read-the-code verification spans multiple steps, not just once at step 1**: persona simulation (step 3), extreme testing (step 4), three-way alignment (step 8), and attribution (step 9) must each **re-read the code to verify**; forbidden to conclude from step-1 memory. Every `file:line` in a conclusion must be "just read / just grepped in this round", not "from memory" — memory goes stale and hallucinates; only freshly read evidence counts.
-8. **False-positive check (mandatory before reporting)**: before reporting anything, confirm "does this scenario apply?" — don't report store review for something not being shipped, don't report software-copyright compliance for personal use, don't report mobile App Store review for a desktop app, don't treat test fixtures as production bugs. **A wrong report hurts trust more than a missed one.**
-9. **What not to touch / not to report**: test fixtures / vendored third-party code (minified) / build artifacts (out/dist) / .env templates / TODO placeholders in docs — these are **not problems** by default, unless the user explicitly asks to audit them. Reporting them is a false positive.
-10. **If you can't find it, say honestly what's missing — never fabricate.**
-11. **Conclusions must be falsifiable (the bottom line of being scientific)**: every root-cause / defect conclusion must carry a **falsifiable verification method** — "if I fix X, symptom Y should disappear; if Y persists after fixing X, this conclusion is wrong." **Forbidden to report unfalsifiable conclusions** (e.g. "bad architecture", "poor code quality", "not good enough"). A conclusion with no verification path = unfalsifiable = not an audit finding, only an "impression" — downgrade it and tag `【impression, no verification path】`.
-12. **Audit weight adapts to the scenario — never over-audit or under-audit**: a landing page / personal tool / self-use project = Lite (core paths + release-hygiene sweep, no full ten steps). Store shipping / copyright / sensitive data / agent system = Deep. Always **recommend a tier with a reason and let the user confirm**; never silently escalate, and never run the heavy pipeline on something that doesn't need it.
+6. **The self-built checks (release hygiene + defensive pollution + wheel reinvention) are this skill's own — always run them, never skip.**
+7. **Read-the-code verification spans multiple steps, not just once at step 1**: walker traversal (step 3), extreme testing (step 4), three-way alignment (step 9), and attribution (step 10) must each **re-read the code to verify**; forbidden to conclude from step-1 memory. Every `file:line` must be "just read / just grepped in this round", not "from memory" — memory goes stale and hallucinates.
+8. **No false positives, no over-auditing**: before reporting anything, confirm "does this scenario apply?" — no store review for something not shipping, no mobile App Store review for a desktop app, no treating test fixtures / vendored code / build artifacts / .env templates / doc TODO placeholders as production bugs. And match the audit weight to the scenario — never run the heavy pipeline on a landing page. **A wrong report hurts trust more than a missed one.**
+9. **Honest + falsifiable**: if you can't find it, say what's missing — never fabricate. Every root-cause conclusion must carry a falsifiable verification method ("if I fix X, symptom Y disappears; if Y persists, X was wrong"); an unfalsifiable statement is an impression, tagged `【impression, no verification path】`, never a finding.
 
 ---
 
-## 2. Methodology (Intake Gate + Ten Steps)
+## 2. Methodology (Intake Gate + Steps)
 
 ### Intake Gate (mandatory, never skip, never guess)
 
-**Core principle: the agent answers first, the human only fills what AI can't know.** This skill is for the agent itself — it can read code, README, and context. So most questions are **answered by the agent first, inferred from code** (with evidence + confidence), not dumped on the human. Only what "isn't in code, only in the founder's head" gets asked of the human — the human's answer fills the real intent AI can't see; it does not do the agent's homework.
+**Core principle: the agent answers first, the human only fills what AI can't know.** This skill is for the agent itself — it can read code, README, and context. So most questions are **answered by the agent first, inferred from code** (with evidence + confidence), not dumped on the human. Only what "isn't in code, only in the founder's head" gets asked of the human.
 
 **Round 1 — agent self-answers (infer before asking).** Read code + README + context; answer each item with `inferred answer + evidence + confidence (high / medium / low)`:
 
-1. **Project type** — web app / CLI / library / desktop app / agent system / game / other (from README / package.json / structure).
+1. **Project type** — web app / CLI / library / desktop app / agent system / game / other (from README / package.json / structure). **This decides what "structure unit" means in Step 1.5.**
 2. **Target users** — how many types, what habits (reverse-infer from README / copy / features).
-3. **Release scenario** — ships where? personal vs commercial? software-copyright? (infer from package.json / README / deploy config; this decides whether compliance / store-review checks apply).
+3. **Release scenario** — ships where? personal vs commercial? software-copyright? (infer from package.json / README / deploy config; decides whether compliance / store-review checks apply).
 4. **Type-specific follow-ups** — web/desktop: which journeys are core, which step loses users, any target platform; CLI/library: target devs, integration scenarios, API constraints; agent system: interaction mode (chat/canvas/voice), automation boundary (what must never auto-run); game: target players, core fun, payment/store plan.
 5. **Depth tier** — Lite / Standard / Deep, with a one-line reason (see "Audit Depth Tiers").
 6. **Loop mode** — one-shot / incremental / gate (see "Embedding in an Existing Loop").
@@ -144,67 +141,47 @@ trigger:
 **Round 2 — human fills the gaps (only what code can't answer).** From Round 1, take the items with **low confidence** or that **change the audit conclusion**, and ask the human as **multiple-choice** — each question shows the agent's inferred answer as the **recommended option**, a few alternatives, and a **"skip — use your inference"** option.
 
 **Always ask the human (code never contains these):**
-1. **Design intent** — for each core feature, what experience did you *want* the user to get? (code shows what it does, not what it means to achieve)
-2. **Real user thoughts** — the actual habits / tolerance / pain points of your target users (not in code)
-3. **Release final say** — does it actually ship / register copyright? (partly inferable, but you decide)
-4. **Is the requirement itself right?** — only when it arises (A/B reference-group choice)
+1. **Design intent** — for each core feature, what experience did you *want* the user to get? (code shows what it does, not what it means to achieve). **This is also the ruler for gate vs break in Step 3a.**
+2. **Real user thoughts** — the actual habits / tolerance / pain points of your target users (not in code).
+3. **Release final say** — does it actually ship / register copyright? (partly inferable, but you decide).
+4. **Is the requirement itself right?** — only when it arises (A/B reference-group choice).
 
-**Fallback rule**: skipped items use the agent's inferred value, tagged `【agent-inferred, not user-stated, needs confirmation】` in the report. If a point arises that "only the user can decide" (A/B reference group, requirement validity, wheel replacement, depth tier, loop mode), **stop and ask — never decide for them**.
+**Fallback rule**: skipped items use the agent's inferred value, tagged `【agent-inferred, not user-stated, needs confirmation】`. If a point arises that "only the user can decide" (A/B reference group, requirement validity, wheel replacement, depth tier, loop mode), **stop and ask — never decide for them**.
 
 ### Audit Depth Tiers (adapt the weight to the project)
 
-**Not every project needs a heavy audit — a landing page or a personal tool should not run the full ten steps.** The agent infers a tier from the intake answers (never guesses), recommends it with a reason, and lets the user override.
+**Not every project needs a heavy audit.** The agent infers a tier from the intake answers, recommends it with a reason, and lets the user override.
 
-How to decide:
-1. **Project size**: single file / small vs medium vs large multi-module.
-2. **Purpose**: self-use / internal / commercial / shipping.
-3. **Release scenario**: not shipping / direct download / store / copyright registration.
-4. **Risk surface**: does it handle user data? concurrency? auth / permission / payment? AI-generated mainline?
-5. **User intent**: "quick look" vs "full acceptance / pre-release".
+How to decide: ① project size ② purpose (self-use/internal/commercial/shipping) ③ release scenario ④ risk surface (user data? concurrency? auth/payment? AI mainline?) ⑤ user intent ("quick look" vs "full acceptance").
 
 | Tier | For | Runs | Skips |
 |---|---|---|---|
-| 🟢 **Lite** | landing page, one-off script, personal tool, self-use (not shipping) | quick classify; 1–2 personas on the 1–3 core paths; experience alignment (core features only); quick release-hygiene sweep; simplified attribution | six-layer checks, wheel-reinvention audit, extreme testing, concurrency stress, orthogonal-array exhaustion, light research |
-| 🟡 **Standard (default)** | medium project, internal tool, acceptance | full ten steps; six-layer checks trimmed by release scenario | compliance layer if not shipping / no copyright |
-| 🔴 **Deep** | store shipping, copyright, commercial release, high concurrency, sensitive data, agent system, "full acceptance" | everything: ten steps + all six layers + extreme testing + concurrency stress | nothing |
+| 🟢 **Lite** | landing page, one-off script, personal tool, self-use | quick classify; 1–2 personas on the 1–3 core paths; experience alignment (core only); quick release-hygiene sweep; simplified attribution | six-layer checks, wheel-reinvention, extreme testing, concurrency stress, orthogonal-array exhaustion, light research |
+| 🟡 **Standard (default)** | medium project, internal tool, acceptance | full steps; six-layer checks trimmed by release scenario | compliance layer if not shipping / no copyright |
+| 🔴 **Deep** | store shipping, copyright, commercial release, high concurrency, sensitive data, agent system, "full acceptance" | everything: all steps + all six layers + extreme testing + concurrency stress | nothing |
 
-Rules:
-- **Recommend, don't decide**: state the tier + one-line reason; let the user override ("just a quick look" → Lite; "I want it thorough" → Deep).
-- **Never silently escalate**: Lite is the floor; only upgrade past Standard with a concrete risk signal (shipping / sensitive data / auth / payment). A big codebase alone is not a reason to run Deep.
-- **Record the tier honestly**: the report states which tier ran and what was skipped and why.
+Rules: **recommend, don't decide** (state tier + reason, let user override); **never silently escalate** (a big codebase alone is not a reason for Deep); **record the tier honestly** in the report header.
 
 ### Embedding in an Existing Loop
 
-If the user already has an ongoing dev loop, the audit plugs in instead of always being a one-off:
-
 | Mode | When | Scope | Output |
 |---|---|---|---|
-| **One-shot** | standalone full audit | everything | full six-layer report |
-| **Incremental** | after each change in the loop | `git diff` + the user paths the diff touches (reverse-inferred from the state machine) | short: new/recurring blockers + root cause |
+| **One-shot** | standalone full audit | everything | full report |
+| **Incremental** | after each change in the loop | `git diff` + paths the diff touches (inferred from the state machine) | short: new/recurring blockers + root cause |
 | **Gate** | before commit / merge / release | high-risk layers only (high-severity security + release hygiene + core paths) | PASS / BLOCK + blocking list |
 
-Execution principles:
-- **Baseline once, then increment**: the first run in a loop does a Standard/Deep audit to build the baseline (personas + state machine + root causes); later runs are Incremental and reuse it — **never re-run the full audit** unless the user asks or the code structure changed fundamentally.
-- **Incremental scope** = `git diff` + reverse-infer which user paths the diff touches (via the state machine); run persona traversal + read-code verification + attribution **only on those paths**.
-- **Gate pass criteria stated up front**: e.g. "no high-severity security, no blocking logic errors, no secret/PII leakage" → PASS; otherwise BLOCK + blocking list with root cause.
-- **Match the output to the loop**: a full report is useless mid-loop; a bare PASS/FAIL is useless for a pre-release gate. The output shape was already asked in the intake gate (step 5).
+Execution principles: **baseline once, then increment** (first run builds personas + state machine + root causes; later runs are Incremental and reuse it — never re-run full unless asked or structure changed); **incremental scope** = `git diff` + reverse-infer affected paths; **gate pass criteria stated up front**; **match output to the loop** (full report is useless mid-loop, bare PASS/FAIL useless pre-release).
 
 ### Light Research (after intake gate, before step 0; mandatory for Standard/Deep, skippable for Lite)
 
-**Personas must not be invented off the top of your head — do a round of light research first to calibrate personas against real data, then choreograph simulated behavior.** This is not deep research; keep it to a few searches, only to get three things:
-
-1. **Target-user commonalities**: search real user profiles for this kind of product/scenario (web_search / communities / app-store reviews / competitor reviews), extract "what kind of people these users generally are, and their habits".
-2. **Real pain points**: what do these users commonly complain about, where do they get stuck, what hurts most.
-3. **Behavior patterns**: how do these users typically use it (one-off? high-frequency? multi-task switching?).
-
-**Three disciplines**: ① every research conclusion **carries a source URL**; ② only search "commonalities + pain points + behavior patterns", don't sink into massive searching (light research = capped at 3–5 searches); ③ when research conflicts with the user-stated intake answers, **user-stated wins** (the founder knows their product better than external research), but list the conflict explicitly for the user to decide.
+**Personas must not be invented off the top of your head.** A round of light research (capped at 3–5 searches) to get three things: ① target-user commonalities ② real pain points ③ behavior patterns. **Disciplines**: every conclusion carries a source URL; when research conflicts with the user-stated intake answers, **user-stated wins** (the founder knows their product better than external research), but list the conflict explicitly.
 
 ### Step 0: Set the ruler — user-persona layering (targeted)
 
-Based on a **three-way synthesis**: intake gate (human-stated intent) + agent self-answer (code-inferred) + light research (external real-user data), produce:
+Based on **three-way synthesis**: intake gate (human-stated) + agent self-answer (code-inferred) + light research (external data), produce:
 
-- **User-persona layering table**: ≥3 user types; for each write: usage habits / expectations / tolerance / features they will and won't use / **pain points** / **behavior patterns**. Tag each item's source: 【user-stated】/【agent-inferred】/【light research · URL】.
-- **Design-intent table**: for each feature, write "what experience the designer wanted the user to get", with source tags.
+- **User-persona layering table**: ≥3 user types; for each: usage habits / expectations / tolerance / features they will and won't use / pain points / behavior patterns. Tag each item's source: 【user-stated】/【agent-inferred】/【light research · URL】.
+- **Design-intent table**: for each feature, "what experience the designer wanted the user to get", source-tagged. **This table doubles as the gate list for Step 3a's gate-vs-break distinction.**
 
 ### Step 1: Recover the truth — read code and model the state machine
 
@@ -212,116 +189,127 @@ Based on a **three-way synthesis**: intake gate (human-stated intent) + agent se
 - Recover the **real behavior of each feature** (what the code actually does, not what the docs claim).
 - Annotate: deviations between actual code behavior and design intent.
 
-### Step 2: Exhaust paths — persona combos + combination-reuse principle (exhaustion ≠ full Cartesian product)
+### Step 1.5: Project structure map (the "brain" — see the whole before dispatching)
 
-**Iron rule: exhaustion = fully traversing `persona combos × function × operation × state × timing`, but "combos" use equivalence classes + boundary values + orthogonal arrays, not the full Cartesian product. Forbidden to sample one happy path and conclude.**
+**Before exhaustively walking paths, list what this project actually contains — so the walkers are assigned, not left to guess.** Read code (not docs alone) and produce:
 
-**The no-miss methodology (the classic software-testing trio, guaranteeing "no miss + no explosion")**:
+1. **Structure units** — what this project is made of, in *its own* organizing terms (never preseed a term):
+   - web app → pages / routes / feature modules
+   - CLI → commands / subcommands
+   - game → play systems / mechanics
+   - agent system → capability scenarios (whatever the project itself calls them)
+   - library → modules / API surfaces
+2. **Core journeys per unit** — the typical user task in each unit (1–N journeys each).
+3. **Journey inventory** — one table of all units × their journeys. **This is the sole input to Step 2.**
 
-1. **Equivalence-class partitioning**: partition each dimension into equivalence classes first — personas by "behavioral similarity" (not infinite subdivision); features grouped by "same kind of behavior" (all "create card" is one class, no need to test each card separately); operations into "normal / abnormal / boundary / interruption" four classes, pick representative values per class (one representative each for empty input, overlong, out-of-order — don't test character by character).
-2. **Boundary-value analysis**: for numeric / length / count boundaries, test **both sides** (0 and 1, upper-bound and upper-bound+1, empty and 1 char) — bugs cluster at boundaries.
-3. **Orthogonal arrays (reduce dimensions without missing)**: don't test the full Cartesian product; use an orthogonal table to guarantee "**every pair of dimensions' combination is covered at least once**". Use only for 3+ factors (persona × function × operation); for 2 factors, do the full combination.
+**Coverage check (explicit)**: the inventory must state "N units × M journeys; unit A has k journeys, unit B has j…" — a missed unit is a failure, not an option. If the tier is Lite, skip units honestly and say why, don't silently drop them.
 
-**Coverage must be quantified and provable**: after exhaustion, the report must state — `covered N persona types × M function groups × K operation classes = P paths; the orthogonal table guarantees every two-dimension combination is covered at least once; boundary values cover 0/1/upper/upper+1`. **"No miss" is not an empty claim — it is guaranteed by the mathematical properties of equivalence classes + boundary values + orthogonal arrays, and the coverage count must be written out.**
+### Step 2: Exhaust paths — persona combos + combination-reuse principle
 
-**Persona = persona × scenario combination** (not a single persona, and not the full persona×scenario Cartesian product):
+**Iron rule: exhaustion = fully traversing `persona combos × journey × operation × state × timing` (where "journey" comes from Step 1.5's inventory), but "combos" use equivalence classes + boundary values + orthogonal arrays, not the full Cartesian product. Forbidden to sample one happy path and conclude.**
 
-1. First list **single-scenario personas**: each persona type × each scenario (e.g. novice × vibe coding, novice × comic drama, expert × vibe coding, expert × comic drama…).
-2. Then list **combined-scenario personas**: real users often "do both A and B" (e.g. a novice does both vibe coding and comic drama).
-3. **Combination-reuse principle (key, avoids combinatorial explosion)**:
-   - If "doing A alone" and "doing B alone" are each tested and fine, then the "does both A and B" combined persona **does not retest everything** — it only tests the **cross-scenario delta**:
-     ① **precise navigation**: is switching between A↔B precise, reversible, and free of leftover wrong state;
-     ② **cross-project memory recall**: does the memory pool know the relationship between A and B, and can it answer "I previously did X in project A";
-     ③ **is the dynamic memory pool working**: is cross-project memory recalled correctly, without contamination or loss.
-   - Only fully test a combination when "a single scenario itself wasn't tested" or "the combination introduces new state".
+**The no-miss methodology (classic software-testing trio)**:
+1. **Equivalence-class partitioning**: personas by "behavioral similarity"; journeys grouped by "same kind of behavior" (all "create X" is one class); operations into "normal / abnormal / boundary / interruption" four classes, pick representative values per class.
+2. **Boundary-value analysis**: test **both sides** of numeric/length/count boundaries (0 and 1, upper and upper+1, empty and 1 char) — bugs cluster at boundaries.
+3. **Orthogonal arrays**: guarantee "**every pair of dimensions' combination is covered at least once**" for 3+ factors (persona × journey × operation); for 2 factors, full combination.
 
-**Persona count is justified, not arbitrary**: total personas = number of needed persona combos, **capped at ≤10** (saves tokens + matches the agent's max concurrency). Over the cap, prioritize by "single-scenario first, then high-value combos", and state in the report which combos were dropped and why.
+**Coverage must be quantified and provable**: the report states `covered N personas × M journey groups × K operation classes = P paths; orthogonal table guarantees every two-dimension combination ≥1; boundary values cover 0/1/upper/upper+1`.
+
+**Persona = persona × scenario combination** (not single persona, not full Cartesian product):
+1. List **single-scenario personas** (each persona type × each scenario — use the project's own scenario names).
+2. List **combined-scenario personas** (real users often "do both A and B").
+3. **Combination-reuse principle** (avoids explosion): if "A alone" and "B alone" are each tested fine, the "A+B" persona only tests the **cross-scenario delta**:
+   ① **precise switching**: is moving between A↔B precise, reversible, free of leftover wrong state;
+   ② **cross-scenario recall**: does the memory/state layer know the relation between A and B, and recall correctly without contamination or loss;
+   ③ **is the cross-scenario mechanism working** at all.
+   Only fully test a combination when a single scenario wasn't tested or the combo introduces new state.
+
+**Persona count is justified, not arbitrary**: total = needed combos, **capped ≤10**. Over the cap, prioritize "single-scenario first, then high-value combos", and state what was dropped and why.
 
 ### Step 3: Two-layer persona traversal — mechanical walker (objective) + intent observer (subjective)
 
-**Key distinction (unchanged)**: deterministic traversal — code is deterministic, the state machine is deterministic; this is not MiroFish-style chaotic swarm. Persona count = step 2's combo count (capped ≤10). But now split into two layers with **different jobs and different output status**:
+**Key distinction**: deterministic traversal — code and state machines are deterministic; not MiroFish-style chaotic swarm. Split into two layers with **different jobs and different output status**:
 
-- **Layer A — mechanical walker (objective)**: walks every path, records only facts (where it got to, where it broke, how many steps). Output is **falsifiable**.
-- **Layer B — intent observer (subjective, ONE persona)**: watches Layer A's breakpoints and produces **reference opinions**. Output is **tagged `【主观参考, 非可证伪发现】`** — a hypothesis generator, not a finding.
+- **Layer A — mechanical walker (objective)**: walks every path, records only facts. Output is **falsifiable**.
+- **Layer B — intent observer (subjective, ONE persona)**: watches Layer A's facts, produces **reference opinions**. Output tagged `【主观参考, 非可证伪发现】` — a hypothesis generator, not a finding.
 
 #### 3a. Layer A — mechanical walkers (record facts, never judge)
 
-1. **Dispatch walkers**: for each persona combo from step 2, dispatch one subagent. Prompt synthesized from ① light research ② intake gate ③ code reverse-inference (unchanged).
+1. **Dispatch walkers**: one per persona combo from step 2. Prompt synthesized from ① light research ② intake gate ③ code reverse-inference.
 
-2. **Each walker verifies along the full code chain and records ONLY three facts per step**:
-   - `reached`: which step it reached — read the code at each link (`user action → entry function → state transition → tool → persistence → output → new state`);
-   - `broke`: did it break here? Breakpoint = an **objective, code-verifiable fact**: the code offers no way to continue (no available action, state machine deadlocked, or thrown error). Read the code to confirm, tag `file:line`.
-   - `steps`: how many steps / rounds this path took before the breakpoint (operation complexity, NOT wall-clock seconds — paper traversal cannot measure real time).
+2. **Each walker verifies along the full code chain and records ONLY four facts per step**:
+   - `reached`: which step it reached (read code at each link: `user action → entry function → state transition → tool → persistence → output → new state`);
+   - `broke`: did it break here — an **objective, code-verifiable fact**: no way to continue (no available action / state deadlocked / thrown error). Confirm by reading code, tag `file:line`.
+   - `gate_or_break`: **is this stop a gate or a break?** A *gate* = an intended human-in-the-loop pause (from Step 0's design-intent table — e.g. confirm/approve/choose points the user deliberately designed). A *break* = an unintended stop (no-key early return, infinite hang with no timeout, thrown error). **Gates are features, not findings; only breaks are defects.** When unsure, tag `gate?` and let attribution decide with the user.
+   - `steps`: how many steps / rounds before the stop (operation complexity, NOT wall-clock seconds — paper traversal can't measure real time).
 
-3. **Forbidden for walkers**: do NOT judge "is this a bug / bad UX / would the user be confused" — those are Layer B / attribution's job. A walker that says "the user would be confused here" has overstepped; downgrade that to a Layer B hypothesis.
+3. **Forbidden for walkers**: do NOT judge "is this a bug / bad UX / would the user be confused" — Layer B / attribution's job. A walker that judges has overstepped; downgrade that to a Layer B hypothesis.
 
-4. **Make factual disagreements explicit**: if two walkers traverse the same path and one records a breakpoint while the other doesn't (state / persona differs), record both readings verbatim — a data point, not a dispute to smooth over.
+4. **Make factual disagreements explicit**: if two walkers record differently on the same path (state/persona differs), record both verbatim — a data point, not a dispute to smooth over.
 
 #### 3b. Layer B — intent observer (ONE persona; produces hypotheses, never findings)
 
-**Positioning**: not "a simulated user", but a **human-intent observer** — like a senior UX researcher: understands human behavior and product intuition, reads Layer A's *factual* breakpoint report, and produces *reference opinions*.
+**Positioning**: not "a simulated user", but a **human-intent observer** — like a senior UX researcher: understands human behavior and product intuition, reads Layer A's *factual* breakpoints, produces *reference opinions*.
 
-**Input**: Layer A's breakpoint list (`file:line` + step counts).
+**Input**: Layer A's break list (`file:line` + gate_or_break + step counts).
 
 **Output — every item carries three parts + a tag**:
 ```
-【主观参考】关注点: <which breakpoint / path segment, anchored to a Layer A fact>
+【主观参考】关注点: <which break / path segment, anchored to a Layer A fact>
 理由: <why a human would most likely care here — behavior / habit intuition>
 建议方向: <where attribution should read the code to verify — file:line>
 ```
 
-**Three disciplines (prevent overstepping into "guessing psychology")**:
-1. Every item MUST be tagged `【主观参考, 非可证伪发现】` — iron rule 11: an opinion is not a finding.
-2. It may only say "this looks suspicious, suggest reading code X" — never "this is a bug" (attribution's call).
-3. Its opinion MUST anchor to a Layer A fact ("based on breakpoint #N, I judge humans would care because…") — never free-floating "I think users would be confused".
+**Three disciplines**:
+1. Every item MUST be tagged `【主观参考, 非可证伪发现】` — iron rule 9: an opinion is not a finding.
+2. It may only say "this looks suspicious, suggest reading code X" — never "this is a bug".
+3. Its opinion MUST anchor to a Layer A fact ("based on breakpoint #N…") — never free-floating "I think users would be confused".
 
-**What the observer adds that walkers can't**: prioritization intuition — among 100 factual breakpoints, which ones a novice would trip on vs an expert would ignore, which ones everyone would curse. It reads the *facts* and adds the *human weighting* Layer A deliberately does not do.
+**What the observer adds that walkers can't**: prioritization intuition — among many factual breaks, which ones a novice trips on vs an expert ignores, which everyone curses. It reads the *facts* and adds the *human weighting* Layer A deliberately does not do.
 
 #### Aggregation (after both layers)
 
-- Layer A: aggregate breakpoints — single-user-specific (boundary) vs hit-by-all (systemic).
-- Layer B: attach hypotheses to the systemic breakpoints.
-- **Hand both to Step 9 (god's-eye attribution)**: Layer A facts = hard evidence; Layer B opinions = investigation leads. Attribution reads code to verify each lead before it can become a finding. An opinion with no code confirmation stays `【主观参考】`, never promoted to a finding.
+- Layer A: aggregate breaks — single-user-specific (boundary) vs hit-by-all (systemic); **gates are recorded but not treated as defects**.
+- Layer B: attach hypotheses to the systemic breaks.
+- **Hand both to Step 10 (god's-eye attribution)**: Layer A facts = hard evidence; Layer B opinions = investigation leads. Attribution reads code to verify each lead before it becomes a finding. An opinion with no code confirmation stays `【主观参考】`, never promoted.
 
 ### Step 4: Extreme testing — jailbreak/injection + stress/concurrency
 
 - **Jailbreak / injection**: prompt injection, role hijacking, system impersonation, jailbreak templates, invisible Unicode. Against step 1's "trusted input boundary", find penetration points and correct interception points.
-- **Multi-task concurrency stress**: run N tasks simultaneously, same-card concurrency, races, timeouts, interruption, duplicate submission, rapid switching. Traverse who overwrites whom, whether locks fail, whether queues are serialized.
+- **Multi-task concurrency stress**: N tasks simultaneously, races, timeouts, interruption, duplicate submission, rapid switching. Traverse who overwrites whom, whether locks fail, whether queues are serialized.
 
 ### Step 5: Specialized-check orchestration — reuse existing skills (don't reinvent)
-
-Load and run the existing skills below, and merge their results back into the report:
 
 | Dimension | Reused skill | What it checks |
 |---|---|---|
 | Security | `llm-sast-scanner` | 34 vulnerability classes, Source→Sink taint tracking |
-| AI-smell / maintainability | `code-auditor` (AI-smell section) + `ponytail-audit` | AI naming emptiness / comment clichés / swallowed exceptions / TODO graveyard; over-engineering delete/stdlib/native/yagni/shrink |
-| Store review | `code-auditor` (software-copyright + store-gating section) | **Conditional trigger**: only run when the intake gate's "release scenario" explicitly says it will ship / register software copyright; if personal use / not shipping / no registration, **skip this row** (otherwise all false positives). And know the platform first: an Electron desktop app does not go through App Store/Google Play mobile review — reporting "mobile store 4.2 / low-quality" is a false positive |
+| AI-smell / maintainability | `code-auditor` (AI-smell) + `ponytail-audit` | naming emptiness / comment clichés / swallowed exceptions / TODO graveyard; over-engineering delete/stdlib/native/yagni/shrink |
+| Store review | `code-auditor` (copyright + store-gating) | **Conditional**: only when the release scenario says ship/register (already decided in Intake Gate); otherwise skip this row. Know the platform first — an Electron desktop app does not go through App Store/Google Play mobile review |
 | General correctness | `code-reviewer` | correctness / security / maintainability / performance 🔴🟡💭 |
 
-Duplicates go to the more specialized one; dedupe then merge. **Before reporting each layer's results, pass iron rule 8 "false-positive check": does this scenario apply? If not, don't report — tag "this layer skipped because the release scenario doesn't apply."**
+Duplicates go to the more specialized one; dedupe then merge. **Before reporting each layer, pass iron rule 8 (false-positive check).**
 
-### Step 6: Release-hygiene check (self-built differentiator, mandatory)
+### Step 6: Release-hygiene check (self-built, mandatory)
 
 **AI-assisted-development-specific — things that should not be publicly released got written into code/config/comments/docs.** Scan item by item:
 
 - **Real personal information**: name / phone / email / address / school / grades / ID number, hardcoded into code, config, fixtures, comments.
-- **Secrets and credentials**: API key / secret / token / private key / personal workspace endpoint, written into code (especially outside .env).
-- **Development trial-and-error traces**: internal process records in comments like "incident observed", "user said XX", "audit found XX", "walkthrough gap N", "temporary / do this for now / to delete".
-- **Internal conversations and summary conclusions**: AI wrote development-time conversations, trial-and-error conclusions, internal decisions into prompts/comments/docs (e.g. "verify item by item at acceptance", "must dispatch subagents" — private intent).
+- **Secrets and credentials**: API key / secret / token / private key / personal workspace endpoint, written outside .env.
+- **Development trial-and-error traces**: comments like "incident observed", "user said XX", "audit found XX", "walkthrough gap N", "temporary / do this for now / to delete".
+- **Internal conversations and conclusions**: development-time dialogue, trial-and-error conclusions, internal decisions written into prompts/comments/docs.
 - **Internal domain information**: internal project names, private domains, internal architecture decisions, unpublished account systems.
 
-For each hit, tag `【release hygiene】+ file:line + content category + leak level`, and list it separately in the report. **This is not in any existing skill's scope — this skill covers it exclusively.**
+For each hit, tag `【release hygiene】+ file:line + content category + leak level`, and list separately in the report.
 
-### 6b. Defensive-content pollution (new dimension — sibling of release hygiene)
+### Step 7: Defensive-content pollution (self-built, mandatory)
 
-**The disease**: AI wrote its *internal* guardrail metadata — corrections, risk warnings, discipline clauses, self-reminders, "as an AI" disclaimers — straight into an artifact that is meant to be public. The artifact stops being universal: a marketing copy with "⚠️ needs verification" can't be published; open-source code with "// untested, don't trust this" can't be shipped.
+**The disease**: AI wrote its *internal* guardrail metadata — corrections, risk warnings, discipline clauses, self-reminders, "as an AI" disclaimers — straight into an artifact meant to be public or a string meant for the end user. The artifact stops being universal: a marketing copy with "⚠️ needs verification" can't be published; open-source code with "// untested, don't trust this" can't be shipped; a user-facing message with "产物自己过一眼" leaks a producer-only concern.
 
 **How it differs from release hygiene**: release hygiene leaks *past* dev traces (secrets, PII, trial-and-error); this leaks the *current* artifact's own defense notes. Same root cause, different symptom — a public deliverable and its internal guardrail metadata were not physically separated.
 
 **The three-question test** (apply to every suspicious sentence / comment):
-1. **Meta or content?** Is this sentence *about* the artifact (its own correctness / trust / status), or *is* it the artifact (the actual copy / code / doc)?
-2. **Who is it addressed to?** To the *producer* ("note to self", "for internal review", "remind me") — or to the *end user*?
+1. **Meta or content?** Is this sentence *about* the artifact (its correctness / trust / status), or *is* it the artifact (the actual copy / code / doc)?
+2. **Who is it addressed to?** To the *producer* ("note to self", "for internal review") — or to the *end user*?
 3. **Deletion test (falsifiable)**: delete it — is the artifact still complete and *more* universal? If yes, it was internal metadata and must be reported.
 
 **Signals to scan for**:
@@ -332,97 +320,81 @@ For each hit, tag `【release hygiene】+ file:line + content category + leak le
 
 **Where to scan — five surfaces (breadth: not just chat and deliverables)**:
 
-Defensive pollution hides in *every* user-visible string, not only conversation replies and published files. Scan all five:
+Defensive pollution hides in *every* user-visible string. Scan all five:
 
-1. **Conversation output** — `appendAssistant` / `finalText` / `appendBrief` / dialogue messages (covered above).
-2. **Deliverable files** — docs / code / config meant to be published or shipped (covered above; overlaps release hygiene).
-3. **Settings / config UI text** *(new surface)* — model pickers, tier labels, capability maps, degradation-matrix wording, parameter descriptions. Internal architecture terms shown to the user: "cortex / reflex", "升舱", "终审", "DS 主力 + K3 前端施工". Locate: `displayName` / `label` / `title` / `t(...)` in settings components and registry / archive files.
-4. **Runtime result display** *(new surface)* — status text, progress, result cards, quality-gate verdicts rendered in the UI. Internal QA terms leaking into what the user sees about their task. Locate: `statusText` / progress / verdict rendering.
-5. **Run log / notifications** *(new surface)* — notification center, toast, event timeline, log panel. Internal QA / process terms shown to the user as "history": "同品牌复核", "对抗性降档", "人工目检", "打回到顶", "如实标". Locate: `pushNotification` / toast / event feed / log lines that reach the UI.
+1. **Conversation output** — `appendAssistant` / `finalText` / `appendBrief` / dialogue messages.
+2. **Deliverable files** — docs / code / config meant to be published or shipped (overlaps release hygiene).
+3. **Settings / config UI text** — model pickers, tier labels, capability maps, degradation-matrix wording, parameter descriptions. Internal architecture terms shown to the user. Locate: `displayName` / `label` / `title` / `t(...)` in settings components and registry/archive files.
+4. **Runtime result display** — status text, progress, result cards, quality-gate verdicts rendered in the UI. Locate: `statusText` / progress / verdict rendering.
+5. **Run log / notifications** — notification center, toast, event timeline, log panel. Internal QA/process terms shown to the user as "history". Locate: `pushNotification` / toast / event feed / log lines that reach the UI.
 
-**Rule**: a term is internal if it names an architecture component ("cortex", "vision-premium", "层2"), a process step ("升舱", "终审", "复验握手"), or a producer-only concern ("省配额", "自己过一眼", "人工目检"). The same term is *not* pollution when the audience is an operator configuring the system (settings aimed at power users may legitimately name engines). Apply iron rule 8 (false-positive check): "end-user-facing text" vs "operator-facing text" are different audiences — only the former is pollution.
+*(The concrete function names above are examples of "how to locate" each surface — the exact names differ per project; use the project's own user-visible-output entry points.)*
 
-**Severity**:
-- **High**: the defensive content makes the artifact unpublishable (whole paragraphs of caveats in public copy; public code full of internal warnings).
-- **Medium**: local contamination (a few lines / comments).
-- **Low**: deliberate compliance disclaimer (e.g. a financial-risk disclaimer) — flag it, but don't assume it's a bug.
+**Rule**: a term is internal if it names an architecture component, a process step, or a producer-only concern. The same term is *not* pollution when the audience is an operator configuring the system (power-user settings may legitimately name engines). Apply iron rule 8: "end-user-facing text" vs "operator-facing text" are different audiences — only the former is pollution.
 
-**Root cause (god's-eye)**: guardrail metadata was not physically separated from the deliverable. Triggers: ① guardrail tools set to `on_fail="fix"` rewriting the text in place; ② prompts telling the model to "self-correct" without distinguishing internal vs external; ③ internal discussion leaking into context and getting copied into the output.
+**Severity**: High = makes the artifact unpublishable; Medium = local contamination; Low = deliberate compliance disclaimer (flag, don't assume it's a bug).
 
-**Fix direction (for the report, not the audit)**: two-layer output (draft vs `public_release`), a `product_mode` parameter, and defense metadata routed to a side channel (logs / review queue) — never injected into the payload. The audit's job is to *detect* the leak and point at its root cause, not to redesign the pipeline.
+**Root cause (god's-eye)**: guardrail metadata was not physically separated from the deliverable. Triggers: ① guardrail tools set to `on_fail="fix"` rewriting in place; ② prompts telling the model to "self-correct" without distinguishing internal vs external; ③ internal discussion leaking into context and copied into output.
 
-### Step 7: Wheel-reinvention audit (self-built differentiator, mandatory)
+**Fix direction (for the report, not the audit)**: two-layer output (draft vs `public_release`), a `product_mode` parameter, defense metadata routed to a side channel (logs / review queue) — never injected into the payload. The audit detects the leak and points at its root cause; it does not redesign the pipeline.
+
+### Step 8: Wheel-reinvention audit (self-built, mandatory)
 
 **Find "this whole module has a more mature open-source alternative, but you hand-rolled an outdated one."**
 
 1. Enumerate the project's feature modules / self-built dependencies (especially "looks hand-written": auth, state management, message queue, ORM, template engine, utility collections, protocol implementations…).
-2. For each suspected self-built module, **search first** (web_search / npm view / GitHub search) for mature open-source alternatives, comparing: maturity, maintenance activity, feature completeness, license (commercially usable, non-infringing).
-3. **Code comparison**: existing self-built implementation vs the mature alternative — where does it fall short (over-wrought? outdated tech? missing features? high maintenance cost?).
-4. When something is "clearly worse than the mature alternative", **stop and ask the user whether to replace it** — don't decide unilaterally (the user may have a deliberate reason to self-build).
+2. For each suspected module, **search first** (web_search / npm view / GitHub search) for mature alternatives, comparing maturity, maintenance, completeness, license.
+3. **Code comparison**: self-built vs mature alternative — where does it fall short?
+4. When something is "clearly worse", **stop and ask the user whether to replace** — don't decide unilaterally.
 
-### Step 8: Experience-layer three-way alignment + reference group
+### Step 9: Experience-layer three-way alignment + reference group
 
-- **Three-way alignment**: for each feature, lay out three things — ① design intent ② actual code behavior ③ real user expectation; find the gaps, focusing on "self-consistent but experience-wrong".
-- **Reference-group experiment**: for features where "is the requirement itself right" is doubtful, design A/B comparisons, and on paper traverse what each design gives the user — to align requirements and cut communication cost.
+- **Three-way alignment**: for each feature, lay out ① design intent ② actual code behavior ③ real user expectation; find the gaps, focusing on "self-consistent but experience-wrong".
+- **Reference-group experiment**: for features where "is the requirement itself right" is doubtful, design A/B comparisons, and on paper traverse what each design gives the user.
 
-### Step 9: God's-eye global attribution (the last step — only after all errors have arrived; scientific attribution)
+### Step 10: God's-eye global attribution (the last step — after all errors have arrived)
 
-**This is not the tail of persona simulation, it is the final attribution of the whole audit — it must wait until all errors from every prior step (persona simulation + six-layer checks + three-way alignment + stress testing) are collected, then take the whole picture in at once.**
+**This is the final attribution of the whole audit — wait until all errors from every prior step (walker traversal + six-layer checks + three-way alignment + stress testing) are collected.**
 
-**Attribution methodology (distinguish "correlation" from "causation"; don't just group similar-looking things):**
+**Attribution methodology (distinguish "correlation" from "causation"):**
 
-1. **Collect the full error set**: aggregate all errors found in prior steps into one "full error set" table (each with file:line + trigger condition + symptom).
+1. **Collect the full error set**: aggregate all errors into one table (each with file:line + trigger condition + symptom).
+2. **Cluster candidate root causes**: by "shared code location / trigger condition / mechanism". Each cluster is a *candidate* (not yet verified).
+3. **Counterfactual verification (separates root cause from symptom)**: for each candidate — "**if I fix this one spot, do the errors in this cluster disappear together?**" Disappear together → true root cause; only one disappears → it was a symptom. Write it out: `candidate X → assume fixed → traverse: do A/B/C disappear?`
+4. **Draw the causal chain (not a flat list)**: `root cause → intermediate cause → symptom`. Mark necessary/sufficient conditions.
+5. **Layer root causes + rank by impact**: prioritize by "how many symptoms one root cause eliminates", not by individual symptom severity.
+6. **Every root cause carries a falsifiable verification method (mandatory)**: "how to verify it's true" — `assume X is true → fix X → expect A/B/C to disappear together; if they persist, X is wrong`. No verification path = tag `【impression, no verification path】`, never a conclusion.
 
-2. **Cluster candidate root causes**: cluster by "shared code location / shared trigger condition / shared mechanism". Each cluster is a **candidate root cause** (note: at this point it's only a "candidate", not yet verified).
+### Step 11: Produce the report — classified layers + converged directions
 
-3. **Counterfactual verification (key — separates root cause from symptom)**: for each candidate root cause, do counterfactual reasoning — "**if I fix this one spot, do the errors in this cluster disappear together?**"
-   - Disappear together → it's a **true root cause**;
-   - Only one disappears, the rest remain → it's just a **symptom** (or "shared appearance"); the real root cause is elsewhere.
-   - Write the counterfactual out: `candidate root cause X → assume X fixed → traverse: do A/B/C disappear as a result?`
-
-4. **Draw the causal chain (not a flat list)**: `root cause → intermediate cause → symptom`. Multiple symptoms may trace to one root cause; one symptom may have multiple contributing causes — mark "necessary/sufficient":
-   - **Necessary condition**: without it the failure doesn't happen (but having it doesn't guarantee it happens);
-   - **Sufficient condition**: with it the failure always happens.
-
-5. **Layer root causes + rank by impact**: prioritize by "how many symptoms one root cause eliminates" (impact), not by individual symptom severity. **The report ultimately highlights only a handful of root causes, not dozens of symptoms** — that's what "big-picture" means.
-
-6. **Every root cause carries a falsifiable verification method (mandatory)**: each root-cause conclusion must spell out "**how to verify it's true**" — `assume root cause X is true → fix X → expect symptoms A/B/C to disappear together; if they persist after fixing, X is not the root cause and attribution must be redone`. This is the landing loop of attribution conclusions: audit is not the endpoint, verified fixing is. **Any root cause without a verification path is tagged `【impression, no verification path】`, and must not be treated as a conclusion.**
-
-### Step 10: Produce the report — six-layer classification + converged directions after attribution
-
-Output the six-layer results + step 9's attribution together. The report body is the six-layer classification, but the **conclusion section must be "the few root causes after attribution + convergence directions ranked by impact"**, not a symptom list.
+Output the layered results + step 10's attribution. The body is the layer classification, but the **conclusion is "the few root causes + impact-ranked convergence directions"**, not a symptom list.
 
 ---
 
-## 3. Output Format (Six-Layer Classification)
+## 3. Output Format
 
 ```
 # Persona Auditor Report
-
-## 0. User-persona layering table + design-intent table (source-tagged: user-stated / reverse-inferred)
-## 1. State-machine recovery + deviations from design intent
-## 2. Exhaustion matrix (five dimensions: persona × function × operation × state × timing, fully traversed)
-## 3. Multi-persona simulation results — logic layer (each persona reasoned independently + prediction causality, with per-path full-chain verification records)
-## 4. Extreme-test results — jailbreak penetration points / concurrency race points
-## 5. Specialized-check results
-     - Security layer (llm-sast-scanner)
-     - AI-smell / maintainability layer (code-auditor + ponytail-audit)
-     - Compliance layer (code-auditor software-copyright + store gating)
-     - General (code-reviewer)
-## 6. Release-hygiene check — release-hygiene layer (this skill's differentiator)
-## 7. Wheel-reinvention audit — architecture layer (this skill's differentiator, incl. "whether to ask about replacement")
-## 8. Experience-layer three-way alignment + reference group — experience layer
-## 9. God's-eye global attribution (root causes after counterfactual verification, not a symptom list)
-     - Full error set (deduped)
-     - Candidate root-cause clustering + counterfactual verification ("fix it, which symptoms disappear together")
-     - Causal chain: root cause → intermediate cause → symptom (mark necessary/sufficient)
-     - Root-cause impact ranking (how many symptoms one root cause eliminates)
-## 10. Convergence directions (by root-cause impact, not by symptom severity)
+## 0. Audit tier + scope (which tier ran, what was skipped and why — honest)
+## 1. User-persona layering table + design-intent table (source-tagged)
+## 2. State-machine recovery + deviations from design intent
+## 3. Project structure map (units × journeys inventory; coverage check)
+## 4. Exhaustion matrix (persona × journey × operation × state × timing, coverage count)
+## 5. Two-layer persona traversal results
+     - 5a. Mechanical walker report: factual breaks (reached / broke / gate_or_break / steps / file:line)
+     - 5b. Intent observer hypotheses: 【主观参考】opinions anchored to breaks
+## 6. Extreme-test results — jailbreak / concurrency
+## 7. Specialized-check results (security / AI-smell / compliance / general)
+## 8. Release-hygiene check
+## 9. Defensive-content pollution (five surfaces)
+## 10. Wheel-reinvention audit
+## 11. Experience-layer three-way alignment + reference group
+## 12. God's-eye global attribution (counterfactually verified root causes)
+      - full error set → candidate clustering → counterfactual verification → causal chain → impact ranking
+## 13. Convergence directions (by root-cause impact, not symptom severity)
 ```
 
-**Report header must state the audit tier** (🟢 Lite / 🟡 Standard / 🔴 Deep) and, when anything was skipped (Lite), what was skipped and why — honest about scope, not hidden.
-
-Every defect uniformly carries: `trigger sequence → expected vs actual → root → owning layer → severity`. **The conclusion section must be "the few root causes after attribution + impact ranking", not dozens of symptoms laid flat.**
+**Report header states the audit tier** and what was skipped (honest, not hidden). Every defect uniformly carries: `trigger sequence → expected vs actual → root → owning layer → severity → falsifiable verification`. The conclusion is "the few root causes + impact ranking", not dozens of symptoms laid flat.
 
 ---
 
@@ -432,24 +404,24 @@ Every defect uniformly carries: `trigger sequence → expected vs actual → roo
 
 | Dimension | What it detects |
 |---|---|
-| 🧠 Logic & state | logic contradictions, dead branches, deadlock, infinite loops, state pollution, stale state, missing preconditions, variables accidentally overwritten, checks skipped, race conditions |
-| 👤 User experience | the "self-consistent but experience-wrong" gap, cognitive overload, feature fragmentation, missing feedback, "says vs does" mismatch, discoverability, recoverability, trust building, mental-model mismatch, abandonment points |
+| 🧠 Logic & state | logic contradictions, dead branches, deadlock, infinite loops, state pollution, stale state, missing preconditions, variables overwritten, checks skipped, race conditions |
+| 👤 User experience | the "self-consistent but experience-wrong" gap, cognitive overload, feature fragmentation, missing feedback, "says vs does" mismatch, discoverability, recoverability, trust, mental-model mismatch, abandonment points |
 | 🔒 Security | SQL injection, XSS, SSRF, IDOR, privilege escalation, command injection, path traversal, arbitrary file read, races, prompt injection, jailbreak (34 classes) |
-| 🤖 AI-smell & maintainability | naming emptiness, comment clichés, over-abstraction, swallowed exceptions, TODO graveyard, over-engineering, reinvented wheels, outdated tech, worse-than-mature-OSS |
-| 📋 Compliance & release | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal info / trial-and-error traces leaked, **defensive-content pollution** (corrections / risk warnings / discipline / self-reminders leaked into public deliverables) |
+| 🤖 AI-smell & maintainability | naming emptiness, comment clichés, over-abstraction, swallowed exceptions, TODO graveyard, over-engineering, reinvented wheels, outdated tech |
+| 📋 Compliance & release | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal traces, **defensive-content pollution** (corrections / warnings / discipline / self-reminders in public artifacts) |
 | ⚡ Concurrency & stress | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
-| 🔗 Cross-project | cross-project memory contamination, precise navigation, dynamic memory pool, cross-domain routing |
+| 🔗 Cross-scenario | cross-scenario contamination, precise switching, memory/state recall correctness, cross-module routing |
 
-> On-demand triggering, not a dump: before auditing, ask "who is it for, where does it ship", and automatically decide which dimensions apply and which to skip (not shipping → don't report store review; desktop app → don't report mobile app review) to avoid false positives.
+> On-demand triggering, not a dump: ask "who is it for, where does it ship" and skip what doesn't apply (no store review for something not shipping, no mobile review for a desktop app).
 
-- **Good at**: logic contradictions, stuck flows, state pollution, missing branches, path boundaries, experience-layer gaps, jailbreak penetration, concurrency races, AI smell, over-engineering, store rejections, **release hygiene (AI-specific)**, **wheel reinvention (mature-alternative comparison)**.
-- **Read-only during audit, fixing happens in the loop**: during the audit, **don't modify code** (to not contaminate the scene, not affect running things), but the audit produces "a few root causes + precise file:line + falsifiable verification methods"; **after the user confirms, the same agent fixes precisely per the report, then verifies "did the symptom disappear"**. This is the complete `audit → confirm → fix → verify` loop; audit is only the first leg.
-- **Limitation**: if the code's actual behavior differs from "the behavior you assumed", paper traversal can only surface "specification-layer contradictions". Mitigation: when you find "traversal ≠ reality", feed the reality back into the state machine.
-- **Cannot do**: cannot read binaries / reverse-engineer (only read plain-source), cannot replace real UI visual inspection, cannot replace real execution regression (the latter two go to vision tools / ux-toolkit / agent-qa). This skill is a "localization + big-picture + orchestration + differentiated-check" tool; fixing is executed by the agent after user confirmation.
+- **Good at**: logic contradictions, stuck flows, state pollution, missing branches, path boundaries, experience-layer gaps, jailbreak penetration, concurrency races, AI smell, over-engineering, store rejections, **release hygiene**, **defensive-content pollution**, **wheel reinvention**.
+- **Read-only during audit, fixing happens in the loop**: don't modify code during the audit (avoid contaminating the scene); the audit produces "a few root causes + precise file:line + falsifiable verification"; after user confirmation, the same agent fixes precisely and verifies "did the symptom disappear". The full loop is `audit → confirm → fix → verify`.
+- **Limitation**: paper traversal surfaces specification-layer contradictions; if actual runtime behavior differs from what code implies, flag the gap and feed it back into the state machine.
+- **Cannot do**: read binaries / reverse-engineer, replace real UI visual inspection, replace real execution regression (the latter go to vision tools / ux-toolkit / agent-qa). This skill is a "localization + big-picture + orchestration + differentiated-check" tool; fixing is executed by the agent after user confirmation.
 
 ---
 
 ## 5. When to Use, When Not
 
-- **Use**: the longer development goes the fuzzier things get, repeatedly stuck in the first few steps, needs acceptance, before packaging, before store submission, before release, needs to judge "is the requirement itself right", needs a comprehensive six-layer audit, **or wants to plug the audit into an existing dev loop (incremental after each change, or a gate before commit/release)**.
+- **Use**: development has gotten fuzzy, repeatedly stuck in the first few steps, needs acceptance, before packaging / store submission / release, needs to judge "is the requirement itself right", needs a comprehensive layered audit, **or wants to plug into an existing dev loop (incremental / gate)**.
 - **Don't use**: needs real UI visual inspection, needs real execution regression, pure performance benchmarks, wants only a single dimension (call the corresponding specialized skill directly).
