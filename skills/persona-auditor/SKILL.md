@@ -237,27 +237,51 @@ Based on a **three-way synthesis**: intake gate (human-stated intent) + agent se
 
 **Persona count is justified, not arbitrary**: total personas = number of needed persona combos, **capped at ≤10** (saves tokens + matches the agent's max concurrency). Over the cap, prioritize by "single-scenario first, then high-value combos", and state in the report which combos were dropped and why.
 
-### Step 3: Deterministic persona simulation + god's eye (not chaotic simulation; token-controlled)
+### Step 3: Two-layer persona traversal — mechanical walker (objective) + intent observer (subjective)
 
-**Key distinction**: we do **deterministic traversal** — code is deterministic, the state machine is deterministic; this is not MiroFish-style "social evolution / emergent swarming" chaotic reasoning. So the persona count = step 2's **persona-combo count** (capped ≤10, not thousands), and tokens are controlled.
+**Key distinction (unchanged)**: deterministic traversal — code is deterministic, the state machine is deterministic; this is not MiroFish-style chaotic swarm. Persona count = step 2's combo count (capped ≤10). But now split into two layers with **different jobs and different output status**:
 
-1. **Dispatch persona subagents (prompt has a basis, not invented)**: for each persona combo from step 2, dispatch one subagent (a "digital persona"). **The persona prompt must be synthesized from three sources**: ① light research (external real users' commonalities + pain points + behavior patterns, with URLs) ② intake gate (founder's design intent + target users) ③ code reverse-inference (feature list + state machine). Fixed prompt fields: `identity / usage habits / expectations / tolerance / pain points / behavior patterns / features they will and won't use / the path list this persona must traverse`. **Each persona reasons independently, without referencing others; combined-persona personas only test the cross-scenario delta, not re-testing already-covered single scenarios.**
+- **Layer A — mechanical walker (objective)**: walks every path, records only facts (where it got to, where it broke, how many steps). Output is **falsifiable**.
+- **Layer B — intent observer (subjective, ONE persona)**: watches Layer A's breakpoints and produces **reference opinions**. Output is **tagged `【主观参考, 非可证伪发现】`** — a hypothesis generator, not a finding.
 
-2. **Each persona verifies along the full code chain, line by line**: for each of its paths, from `user action → entry function → state-machine transition → tool execution → persistence → output → new state`, **read the code at each link to verify the real behavior**, and record each step: `which branch was actually taken / how state changed / what was output / where it broke`. **Forbidden to flag a line just because it looks like a bug — you must walk the full chain before you may say "this path breaks at X".**
+#### 3a. Layer A — mechanical walkers (record facts, never judge)
 
-3. **Prediction + causality (predictions must close the loop to code evidence)**: each persona not only records "it broke", but also **predicts**: after this user completes this step, what will they do next, what will they see, what misunderstanding will they form. **Every prediction must land on "which line of code caused this outcome"** — a prediction without code evidence is tagged `【speculation, not localized】`; forbidden to pass off "storytelling" as "traversal".
+1. **Dispatch walkers**: for each persona combo from step 2, dispatch one subagent. Prompt synthesized from ① light research ② intake gate ③ code reverse-inference (unchanged).
 
-4. **Personas also detect these dimensions (not just "does it run")**:
-   - **Discoverability**: how does this user discover a feature? What if they can't find it?
-   - **Recoverability**: can they undo/recover from a mistake? Is the error message understandable?
-   - **Trust building**: why would the user believe the agent did it right? Where's the evidence/feedback?
-   - **Mental-model consistency**: does what the user assumes match what the system actually does? (key — corresponds to "self-consistent but experience-wrong")
-   - **Abandonment point**: at which step would this user give up / leave? Why?
-   - **Privacy perception**: this user's perception and fear of "where does my data go".
+2. **Each walker verifies along the full code chain and records ONLY three facts per step**:
+   - `reached`: which step it reached — read the code at each link (`user action → entry function → state transition → tool → persistence → output → new state`);
+   - `broke`: did it break here? Breakpoint = an **objective, code-verifiable fact**: the code offers no way to continue (no available action, state machine deadlocked, or thrown error). Read the code to confirm, tag `file:line`.
+   - `steps`: how many steps / rounds this path took before the breakpoint (operation complexity, NOT wall-clock seconds — paper traversal cannot measure real time).
 
-5. **Make disagreements explicit**: different personas may judge the same path differently (novice feels stuck, expert feels normal, specialist feels too verbose) — **this disagreement itself is evidence of "experience-layer gap"**, and must be recorded explicitly as "which persona judged what, and why they disagree", never smoothed over.
+3. **Forbidden for walkers**: do NOT judge "is this a bug / bad UX / would the user be confused" — those are Layer B / attribution's job. A walker that says "the user would be confused here" has overstepped; downgrade that to a Layer B hypothesis.
 
-6. **Aggregate persona results**: wait until **all paths of all personas** are traversed, then do a "persona-layer" aggregation — which breakpoints are single-user-specific (boundary), which are hit by all users (systemic), and where personas disagree. **Note: this is only aggregation, not global attribution — global attribution is step 9 "god's eye", done only after all errors (not just personas, but also the six-layer checks) have arrived.**
+4. **Make factual disagreements explicit**: if two walkers traverse the same path and one records a breakpoint while the other doesn't (state / persona differs), record both readings verbatim — a data point, not a dispute to smooth over.
+
+#### 3b. Layer B — intent observer (ONE persona; produces hypotheses, never findings)
+
+**Positioning**: not "a simulated user", but a **human-intent observer** — like a senior UX researcher: understands human behavior and product intuition, reads Layer A's *factual* breakpoint report, and produces *reference opinions*.
+
+**Input**: Layer A's breakpoint list (`file:line` + step counts).
+
+**Output — every item carries three parts + a tag**:
+```
+【主观参考】关注点: <which breakpoint / path segment, anchored to a Layer A fact>
+理由: <why a human would most likely care here — behavior / habit intuition>
+建议方向: <where attribution should read the code to verify — file:line>
+```
+
+**Three disciplines (prevent overstepping into "guessing psychology")**:
+1. Every item MUST be tagged `【主观参考, 非可证伪发现】` — iron rule 11: an opinion is not a finding.
+2. It may only say "this looks suspicious, suggest reading code X" — never "this is a bug" (attribution's call).
+3. Its opinion MUST anchor to a Layer A fact ("based on breakpoint #N, I judge humans would care because…") — never free-floating "I think users would be confused".
+
+**What the observer adds that walkers can't**: prioritization intuition — among 100 factual breakpoints, which ones a novice would trip on vs an expert would ignore, which ones everyone would curse. It reads the *facts* and adds the *human weighting* Layer A deliberately does not do.
+
+#### Aggregation (after both layers)
+
+- Layer A: aggregate breakpoints — single-user-specific (boundary) vs hit-by-all (systemic).
+- Layer B: attach hypotheses to the systemic breakpoints.
+- **Hand both to Step 9 (god's-eye attribution)**: Layer A facts = hard evidence; Layer B opinions = investigation leads. Attribution reads code to verify each lead before it can become a finding. An opinion with no code confirmation stays `【主观参考】`, never promoted to a finding.
 
 ### Step 4: Extreme testing — jailbreak/injection + stress/concurrency
 
