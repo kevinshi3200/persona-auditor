@@ -285,7 +285,7 @@ Based on **three-way synthesis**: intake gate (human-stated) + agent self-answer
 | Security | `llm-sast-scanner` | 34 vulnerability classes, Source→Sink taint tracking |
 | AI-smell / maintainability | `code-auditor` (AI-smell) + `ponytail-audit` | naming emptiness / comment clichés / swallowed exceptions / TODO graveyard; over-engineering delete/stdlib/native/yagni/shrink |
 | Store review | `code-auditor` (copyright + store-gating) | **Conditional**: only when the release scenario says ship/register (already decided in Intake Gate); otherwise skip this row. Know the platform first — an Electron desktop app does not go through App Store/Google Play mobile review |
-| General correctness | `code-reviewer` | correctness / security / maintainability / performance 🔴🟡💭 |
+| General correctness | `code-reviewer` | correctness / security / maintainability / performance 🔴🟡💭 — **must explicitly cover: dead code / speculative abstraction (zero-consumption modules, dead switches, retired-but-kept files), duplicate definitions / same-name conflicts (one symbol defined multiple incompatible ways), god files / over-centralized modules (one file carrying too many responsibilities)** |
 
 Duplicates go to the more specialized one; dedupe then merge. **Before reporting each layer, pass iron rule 8 (false-positive check).**
 
@@ -407,7 +407,7 @@ Output the layered results + step 10's attribution. The body is the layer classi
 | 🧠 Logic & state | logic contradictions, dead branches, deadlock, infinite loops, state pollution, stale state, missing preconditions, variables overwritten, checks skipped, race conditions |
 | 👤 User experience | the "self-consistent but experience-wrong" gap, cognitive overload, feature fragmentation, missing feedback, "says vs does" mismatch, discoverability, recoverability, trust, mental-model mismatch, abandonment points |
 | 🔒 Security | SQL injection, XSS, SSRF, IDOR, privilege escalation, command injection, path traversal, arbitrary file read, races, prompt injection, jailbreak (34 classes) |
-| 🤖 AI-smell & maintainability | naming emptiness, comment clichés, over-abstraction, swallowed exceptions, TODO graveyard, over-engineering, reinvented wheels, outdated tech |
+| 🤖 AI-smell & maintainability | naming emptiness, comment clichés, over-abstraction, swallowed exceptions, TODO graveyard, over-engineering, reinvented wheels, outdated tech, **dead code / speculative abstraction**, **duplicate definitions / same-name conflicts**, **god files / over-centralized modules** |
 | 📋 Compliance & release | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal traces, **defensive-content pollution** (corrections / warnings / discipline / self-reminders in public artifacts) |
 | ⚡ Concurrency & stress | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
 | 🔗 Cross-scenario | cross-scenario contamination, precise switching, memory/state recall correctness, cross-module routing |
