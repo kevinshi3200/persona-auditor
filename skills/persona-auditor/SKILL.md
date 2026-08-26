@@ -53,6 +53,14 @@ trigger:
   - AI smell
   - over-engineering
   - reinvent the wheel
+  - tech-stack unification
+  - adapter convergence
+  - parallel adapters
+  - dead adapter
+  - write-only config
+  - one concern two adapters
+  - multiple adapters
+  - 技术栈统一
   - software copyright compliance
   - store review
   - secret leakage
@@ -106,6 +114,7 @@ trigger:
    - **Release hygiene**: development trial-and-error, conversations, summary conclusions, real personal information, secrets, and internal decisions written into code / config / comments / docs.
    - **Defensive-content pollution**: guardrail metadata (corrections, risk warnings, discipline, self-reminders) leaked into public deliverables and user-visible strings.
    - **Wheel-reinvention audit**: "this whole module has a more mature open-source alternative, but you hand-rolled an outdated one".
+   - **Adapter-convergence audit (tech-stack unification)**: "the same concern was solved N times, in N parallel ways, and never converged to one seam" — the subagent/borrowed-tech failure mode that leaves one concern with N adapters (or 1 live + 1 dead), a write-only capability registry, or two names/units for one fact.
 4. **Adaptive scope**: depth tiers (Lite/Standard/Deep) and loop modes (one-shot/incremental/gate) so the audit weight matches the project, never over- or under-auditing.
 
 **Paper traversal is the means, not the end**: not executing, not clicking is how we *cheaply exhaust every user path* — faster, more global than real clicking, able to see root causes at a glance. **But it is never an excuse to "not fix"**: the audit's closed loop is `report (root cause + precise location) → user confirms → agent fixes precisely → verify via falsifiable check (symptom disappears)`.
@@ -116,8 +125,8 @@ trigger:
 3. **Do not fall into the "code self-consistency" trap**: internally consistent code ≠ a good product.
 4. **Exhaustiveness is the soul; sampling is negligence**: steps 1.5/2/3 must fully traverse the `structure × persona × function × operation × state × timing` matrix; many walker subagents each reason independently; **only after traversing all paths may you do root-cause analysis**. Forbidden to sample one happy path and conclude.
 5. **Reuse first, don't reinvent**: for security / AI-smell / maintainability / review, load `llm-sast-scanner` / `code-auditor` / `ponytail-audit` / `code-reviewer`; do not rewrite their rules.
-6. **The self-built checks (release hygiene + defensive pollution + wheel reinvention) are this skill's own — always run them, never skip.**
-7. **Read-the-code verification spans multiple steps, not just once at step 1**: walker traversal (step 3), extreme testing (step 4), three-way alignment (step 9), and attribution (step 10) must each **re-read the code to verify**; forbidden to conclude from step-1 memory. Every `file:line` must be "just read / just grepped in this round", not "from memory" — memory goes stale and hallucinates.
+6. **The self-built checks (release hygiene + defensive pollution + wheel reinvention + adapter convergence) are this skill's own — always run them, never skip.**
+7. **Read-the-code verification spans multiple steps, not just once at step 1**: walker traversal (step 3), extreme testing (step 4), three-way alignment (step 10), and attribution (step 11) must each **re-read the code to verify**; forbidden to conclude from step-1 memory. Every `file:line` must be "just read / just grepped in this round", not "from memory" — memory goes stale and hallucinates.
 8. **No false positives, no over-auditing**: before reporting anything, confirm "does this scenario apply?" — no store review for something not shipping, no mobile App Store review for a desktop app, no treating test fixtures / vendored code / build artifacts / .env templates / doc TODO placeholders as production bugs. And match the audit weight to the scenario — never run the heavy pipeline on a landing page. **A wrong report hurts trust more than a missed one.**
 9. **Honest + falsifiable**: if you can't find it, say what's missing — never fabricate. Every root-cause conclusion must carry a falsifiable verification method ("if I fix X, symptom Y disappears; if Y persists, X was wrong"); an unfalsifiable statement is an impression, tagged `【impression, no verification path】`, never a finding.
 
@@ -271,7 +280,7 @@ Based on **three-way synthesis**: intake gate (human-stated) + agent self-answer
 
 - Layer A: aggregate breaks — single-user-specific (boundary) vs hit-by-all (systemic); **gates are recorded but not treated as defects**.
 - Layer B: attach hypotheses to the systemic breaks.
-- **Hand both to Step 10 (god's-eye attribution)**: Layer A facts = hard evidence; Layer B opinions = investigation leads. Attribution reads code to verify each lead before it becomes a finding. An opinion with no code confirmation stays `【主观参考】`, never promoted.
+- **Hand both to Step 11 (god's-eye attribution)**: Layer A facts = hard evidence; Layer B opinions = investigation leads. Attribution reads code to verify each lead before it becomes a finding. An opinion with no code confirmation stays `【主观参考】`, never promoted.
 
 ### Step 4: Extreme testing — jailbreak/injection + stress/concurrency
 
@@ -347,12 +356,55 @@ Defensive pollution hides in *every* user-visible string. Scan all five:
 3. **Code comparison**: self-built vs mature alternative — where does it fall short?
 4. When something is "clearly worse", **stop and ask the user whether to replace** — don't decide unilaterally.
 
-### Step 9: Experience-layer three-way alignment + reference group
+### Step 9: Adapter-convergence audit — tech-stack unification (self-built, mandatory)
+
+**The disease this catches is NOT "a module is bad" — it's "the same concern was solved N times, in N parallel ways, and never converged to one seam."**
+
+This is the failure mode of **subagent / borrowed-tech-driven development**: each subagent or borrow adds its *own* adapter (LLM client, storage layer, renderer, tool dispatcher) for a concern that already had one. Left unmanaged, you get "one concern → N adapters", where N adapter instances each carry lifecycle/params duplicated, or one adapter is dead while a parallel copy is alive. The debt lives in the **interface/architecture layer** (how many ways reach the same capability), not in whether any single module is well-written.
+
+**How it differs from Step 8 (wheel reinvention)**:
+- **Wheel reinvention** asks "did you hand-roll a *worse* version of something with a mature OSS alternative?" — the fix is *replace/borrow*.
+- **Adapter convergence** asks "do you have *more than one* adapter for the same concern?" — even if each is well-built, *having N is the debt*. The fix is *converge to one seam* (delete redundant adapters, or wire the one that's dead, or make N share a single interface).
+
+**Detection method — a strict, falsifiable, four-pass scan (per concern):**
+
+For each cross-cutting concern (LLM / model, storage / persistence, rendering, tool dispatch, voice I/O, logging, config), run:
+
+1. **Enumerate ALL implementations of that concern** — find every file that claims the concern's job (grep the concern's verbs: "send"/"openai"/"chat", "write"/"store"/"save", "render"/"draw", "call tool"/"dispatch", "transcribe"/"speak"). Do NOT stop at the one the design doc names; grepping is what surfaces the parallel ones.
+
+2. **Find every call-site that reaches the concern** — not just the definitions. A definition is separable from whether it's *reachable*: `grep` the adapter's exported symbol + import path. **A symbol with quotes in a test/script but zero production callers is DEAD (unwired), not "reserved".** Record: `definition (file:line)` + `call-sites (count, file:line)` + `is there a production caller?`.
+
+3. **Count the distinct adapters (the headline finding)**: for the same concern, is it 1 adapter used everywhere (converged — good), or N adapters where N≥2, or 1 live + 1 dead, or N that each hold partial capability? **The cardinality of "ways to reach a concern" IS the finding.**
+
+4. **Verify "single source of truth" for the concern's metadata**: do the adapters read the SAME capability spec (window size, modalities, dialect, limits), or is the same fact stored in **N registries with N field names / N units** (e.g. `contextLimit:1_000_000` vs `windowK:1000`, `vision:true` vs `modalities:['image']`)? N registries = drift risk; a value changed in one and stale in the other is the proof. **This is the "same fact, two copies" check.**
+
+**The six signals that flag a convergence failure** (each falsifiable, pick matching ones):
+| Signal | What it means | Prove by |
+|---|---|---|
+| 🎯 **Dead adapter** (unwired) | a whole adapter module exists, has exported symbols, but zero production callers; only a manual test script imports it | grep the symbol + import path → only hits are the module itself + a non-CI script |
+| 🧩 **Parallel adapters** | the same concern solved by N separate implementations (N renderer instances / N storage stores / N tool-dispatch paths) at once | grep count of `new XRenderer` / distinct store/types / distinct dispatch entrypoints |
+| 📇 **Write-only capability schema** | a config/registry declares fields (context, limits, dialect, vision, tools) that NO code reads | grep each declared field → zero readers |
+| 👻 **Ghost enum value** | a union/type declares a value ('responses') that no producer sets and no dispatcher handles | grep the value → only the type + a comment |
+| 🔄 **Split meaning of one thing** | the same fact stored in N registries with N field names/units (drift) | compare field names + units across registries, show a real stale example |
+| 🧹 **Partial-use borrow** | a heavy library imported, but only a tiny non-core surface used (full editor for 1 screen + 2 utility funcs) | list import lines vs the 1–2 actual call-sites |
+
+**Governance method (for the report — how to keep it converged going forward):**
+- **One concern = one seam.** For each of the enumerated concerns, name the *one* adapter that is canonical; every caller must go through it.
+- **Dead means deleted.** An unwired adapter (dead-code signal) is either wired now or removed — never left as "reserved / pilot / test-only". A non-CI script referencing it is not a reason to keep it.
+- **One metadata registry per concern.** Capability facts (context, modalities, dialect, limits) live in exactly one place; the other registries either read it or are merged/deleted. Never two names / two units for one fact.
+- **Converge, don't keep both.** When a concern has 2 live adapters, decide "which is canonical" and migrate — do NOT keep N "because both work". N working adapters is still N× the maintenance.
+- **Brace against future borrows**: the report's conclusion must state "the next time a tech is borrowed, it either enters the canonical seam or is deliberately scoped + removed; nothing stays 'borrowed but unwired'."
+
+**Output**: list per concern → `concern | adapter cardinality (1 / N / 1-live-1-dead) | signal(s) marked | evidence file:line | canonical seam to converge to | action (delete / wire / merge)`.
+
+> Every conclusion obeys iron rule 9: a convergence finding must be falsifiable — "delete the dead adapter → does behavior change? no → it was dead"; "route all callers through the canonical seam → do the N ways collapse to 1? yes → convergence confirmed".
+
+### Step 10: Experience-layer three-way alignment + reference group
 
 - **Three-way alignment**: for each feature, lay out ① design intent ② actual code behavior ③ real user expectation; find the gaps, focusing on "self-consistent but experience-wrong".
 - **Reference-group experiment**: for features where "is the requirement itself right" is doubtful, design A/B comparisons, and on paper traverse what each design gives the user.
 
-### Step 10: God's-eye global attribution (the last step — after all errors have arrived)
+### Step 11: God's-eye global attribution (the last step — after all errors have arrived)
 
 **This is the final attribution of the whole audit — wait until all errors from every prior step (walker traversal + six-layer checks + three-way alignment + stress testing) are collected.**
 
@@ -365,9 +417,9 @@ Defensive pollution hides in *every* user-visible string. Scan all five:
 5. **Layer root causes + rank by impact**: prioritize by "how many symptoms one root cause eliminates", not by individual symptom severity.
 6. **Every root cause carries a falsifiable verification method (mandatory)**: "how to verify it's true" — `assume X is true → fix X → expect A/B/C to disappear together; if they persist, X is wrong`. No verification path = tag `【impression, no verification path】`, never a conclusion.
 
-### Step 11: Produce the report — classified layers + converged directions
+### Step 12: Produce the report — classified layers + converged directions
 
-Output the layered results + step 10's attribution. The body is the layer classification, but the **conclusion is "the few root causes + impact-ranked convergence directions"**, not a symptom list.
+Output the layered results + step 11's attribution. The body is the layer classification, but the **conclusion is "the few root causes + impact-ranked convergence directions"**, not a symptom list.
 
 ---
 
@@ -388,10 +440,11 @@ Output the layered results + step 10's attribution. The body is the layer classi
 ## 8. Release-hygiene check
 ## 9. Defensive-content pollution (five surfaces)
 ## 10. Wheel-reinvention audit
-## 11. Experience-layer three-way alignment + reference group
-## 12. God's-eye global attribution (counterfactually verified root causes)
+## 11. Adapter-convergence audit (tech-stack unification) — per concern: cardinality / signals / evidence / canonical seam / action
+## 12. Experience-layer three-way alignment + reference group
+## 13. God's-eye global attribution (counterfactually verified root causes)
       - full error set → candidate clustering → counterfactual verification → causal chain → impact ranking
-## 13. Convergence directions (by root-cause impact, not symptom severity)
+## 14. Convergence directions (by root-cause impact, not symptom severity)
 ```
 
 **Report header states the audit tier** and what was skipped (honest, not hidden). Every defect uniformly carries: `trigger sequence → expected vs actual → root → owning layer → severity → falsifiable verification`. The conclusion is "the few root causes + impact ranking", not dozens of symptoms laid flat.
@@ -411,10 +464,11 @@ Output the layered results + step 10's attribution. The body is the layer classi
 | 📋 Compliance & release | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal traces, **defensive-content pollution** (corrections / warnings / discipline / self-reminders in public artifacts) |
 | ⚡ Concurrency & stress | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
 | 🔗 Cross-scenario | cross-scenario contamination, precise switching, memory/state recall correctness, cross-module routing |
+| 🧩 Tech-stack unification | **adapter-convergence failure**: one concern solved by N parallel adapters / 1 live + 1 dead / write-only capability registry / ghost enum value / two names or two units for one fact / partial-use heavy borrow |
 
 > On-demand triggering, not a dump: ask "who is it for, where does it ship" and skip what doesn't apply (no store review for something not shipping, no mobile review for a desktop app).
 
-- **Good at**: logic contradictions, stuck flows, state pollution, missing branches, path boundaries, experience-layer gaps, jailbreak penetration, concurrency races, AI smell, over-engineering, store rejections, **release hygiene**, **defensive-content pollution**, **wheel reinvention**.
+- **Good at**: logic contradictions, stuck flows, state pollution, missing branches, path boundaries, experience-layer gaps, jailbreak penetration, concurrency races, AI smell, over-engineering, store rejections, **release hygiene**, **defensive-content pollution**, **wheel reinvention**, **adapter convergence (tech-stack unification)**.
 - **Read-only during audit, fixing happens in the loop**: don't modify code during the audit (avoid contaminating the scene); the audit produces "a few root causes + precise file:line + falsifiable verification"; after user confirmation, the same agent fixes precisely and verifies "did the symptom disappear". The full loop is `audit → confirm → fix → verify`.
 - **Limitation**: paper traversal surfaces specification-layer contradictions; if actual runtime behavior differs from what code implies, flag the gap and feed it back into the state machine.
 - **Cannot do**: read binaries / reverse-engineer, replace real UI visual inspection, replace real execution regression (the latter go to vision tools / ux-toolkit / agent-qa). This skill is a "localization + big-picture + orchestration + differentiated-check" tool; fixing is executed by the agent after user confirmation.
