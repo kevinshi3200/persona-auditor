@@ -237,7 +237,7 @@ Based on **three-way synthesis**: intake gate (human-stated) + agent self-answer
 
 ### Step 3: Two-layer persona traversal — mechanical walker (objective) + intent observer (subjective)
 
-**Key distinction**: deterministic traversal — code and state machines are deterministic; not MiroFish-style chaotic swarm. Split into two layers with **different jobs and different output status**:
+**Key distinction**: deterministic traversal — code and state machines are deterministic, not a chaotic multi-agent swarm. Split into two layers with **different jobs and different output status**:
 
 - **Layer A — mechanical walker (objective)**: walks every path, records only facts. Output is **falsifiable**.
 - **Layer B — intent observer (subjective, ONE persona)**: watches Layer A's facts, produces **reference opinions**. Output tagged `【主观参考, 非可证伪发现】` — a hypothesis generator, not a finding.
@@ -376,7 +376,7 @@ For each cross-cutting concern (LLM / model, storage / persistence, rendering, t
 
 3. **Count the distinct adapters (the headline finding)**: for the same concern, is it 1 adapter used everywhere (converged — good), or N adapters where N≥2, or 1 live + 1 dead, or N that each hold partial capability? **The cardinality of "ways to reach a concern" IS the finding.**
 
-4. **Verify "single source of truth" for the concern's metadata**: do the adapters read the SAME capability spec (window size, modalities, dialect, limits), or is the same fact stored in **N registries with N field names / N units** (e.g. `contextLimit:1_000_000` vs `windowK:1000`, `vision:true` vs `modalities:['image']`)? N registries = drift risk; a value changed in one and stale in the other is the proof. **This is the "same fact, two copies" check.**
+4. **Verify "single source of truth" for the concern's metadata**: do the adapters read the SAME capability spec (window size, modalities, dialect, limits), or is the same fact stored in **N registries with N field names / N units** (e.g. one registry calls it `context` in tokens, another `context` in thousands; one uses a boolean `supportsImages`, another a `modalities` list containing `image`)? N registries = drift risk; a value changed in one and stale in the other is the proof. **This is the "same fact, two copies" check.**
 
 **The six signals that flag a convergence failure** (each falsifiable, pick matching ones):
 | Signal | What it means | Prove by |
@@ -384,9 +384,9 @@ For each cross-cutting concern (LLM / model, storage / persistence, rendering, t
 | 🎯 **Dead adapter** (unwired) | a whole adapter module exists, has exported symbols, but zero production callers; only a manual test script imports it | grep the symbol + import path → only hits are the module itself + a non-CI script |
 | 🧩 **Parallel adapters** | the same concern solved by N separate implementations (N renderer instances / N storage stores / N tool-dispatch paths) at once | grep count of `new XRenderer` / distinct store/types / distinct dispatch entrypoints |
 | 📇 **Write-only capability schema** | a config/registry declares fields (context, limits, dialect, vision, tools) that NO code reads | grep each declared field → zero readers |
-| 👻 **Ghost enum value** | a union/type declares a value ('responses') that no producer sets and no dispatcher handles | grep the value → only the type + a comment |
+| 👻 **Ghost enum value** | a union/type declares a value that no producer sets and no dispatcher handles | grep the value → only the type + a comment |
 | 🔄 **Split meaning of one thing** | the same fact stored in N registries with N field names/units (drift) | compare field names + units across registries, show a real stale example |
-| 🧹 **Partial-use borrow** | a heavy library imported, but only a tiny non-core surface used (full editor for 1 screen + 2 utility funcs) | list import lines vs the 1–2 actual call-sites |
+| 🧹 **Partial-use borrow** | a heavy library imported, but only a tiny non-core surface used (a full editor for a single screen + two utility calls) | list import lines vs the actual call-sites |
 
 **Governance method (for the report — how to keep it converged going forward):**
 - **One concern = one seam.** For each of the enumerated concerns, name the *one* adapter that is canonical; every caller must go through it.
