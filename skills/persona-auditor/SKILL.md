@@ -61,6 +61,16 @@ trigger:
   - one concern two adapters
   - multiple adapters
   - 技术栈统一
+  - publish gate
+  - publish self-check
+  - pre-publication leak
+  - public artifact check
+  - remove internal name
+  - universal
+  - universality
+  - 发布前自检
+  - 公开产物
+  - 普适性
   - software copyright compliance
   - store review
   - secret leakage
@@ -115,6 +125,7 @@ trigger:
    - **Defensive-content pollution**: guardrail metadata (corrections, risk warnings, discipline, self-reminders) leaked into public deliverables and user-visible strings.
    - **Wheel-reinvention audit**: "this whole module has a more mature open-source alternative, but you hand-rolled an outdated one".
    - **Adapter-convergence audit (tech-stack unification)**: "the same concern was solved N times, in N parallel ways, and never converged to one seam" — the subagent/borrowed-tech failure mode that leaves one concern with N adapters (or 1 live + 1 dead), a write-only capability registry, or two names/units for one fact.
+   - **Publish gate (pre-publication self-check)**: "my OWN public artifact about to ship carries a specific-project fingerprint" — a project noun, a concrete field name/unit/value, a named borrowed framework, or a producer-voice "we" — applied to the artifact in your hand before it goes out (covers the skill's own README/SKILL/marketing).
 4. **Adaptive scope**: depth tiers (Lite/Standard/Deep) and loop modes (one-shot/incremental/gate) so the audit weight matches the project, never over- or under-auditing.
 
 **Paper traversal is the means, not the end**: not executing, not clicking is how we *cheaply exhaust every user path* — faster, more global than real clicking, able to see root causes at a glance. **But it is never an excuse to "not fix"**: the audit's closed loop is `report (root cause + precise location) → user confirms → agent fixes precisely → verify via falsifiable check (symptom disappears)`.
@@ -125,7 +136,7 @@ trigger:
 3. **Do not fall into the "code self-consistency" trap**: internally consistent code ≠ a good product.
 4. **Exhaustiveness is the soul; sampling is negligence**: steps 1.5/2/3 must fully traverse the `structure × persona × function × operation × state × timing` matrix; many walker subagents each reason independently; **only after traversing all paths may you do root-cause analysis**. Forbidden to sample one happy path and conclude.
 5. **Reuse first, don't reinvent**: for security / AI-smell / maintainability / review, load `llm-sast-scanner` / `code-auditor` / `ponytail-audit` / `code-reviewer`; do not rewrite their rules.
-6. **The self-built checks (release hygiene + defensive pollution + wheel reinvention + adapter convergence) are this skill's own — always run them, never skip.**
+6. **The self-built checks (release hygiene + defensive pollution + wheel reinvention + adapter convergence + publish gate) are this skill's own — always run them, never skip.**
 7. **Read-the-code verification spans multiple steps, not just once at step 1**: walker traversal (step 3), extreme testing (step 4), three-way alignment (step 10), and attribution (step 11) must each **re-read the code to verify**; forbidden to conclude from step-1 memory. Every `file:line` must be "just read / just grepped in this round", not "from memory" — memory goes stale and hallucinates.
 8. **No false positives, no over-auditing**: before reporting anything, confirm "does this scenario apply?" — no store review for something not shipping, no mobile App Store review for a desktop app, no treating test fixtures / vendored code / build artifacts / .env templates / doc TODO placeholders as production bugs. And match the audit weight to the scenario — never run the heavy pipeline on a landing page. **A wrong report hurts trust more than a missed one.**
 9. **Honest + falsifiable**: if you can't find it, say what's missing — never fabricate. Every root-cause conclusion must carry a falsifiable verification method ("if I fix X, symptom Y disappears; if Y persists, X was wrong"); an unfalsifiable statement is an impression, tagged `【impression, no verification path】`, never a finding.
@@ -421,6 +432,28 @@ For each cross-cutting concern (LLM / model, storage / persistence, rendering, t
 
 Output the layered results + step 11's attribution. The body is the layer classification, but the **conclusion is "the few root causes + impact-ranked convergence directions"**, not a symptom list.
 
+### Step 13: Publish gate — self-check BEFORE releasing any public artifact (self-built, mandatory)
+
+**The disease**: you're about to publish something public — a README, a marketing copy, an open-source skill, a public doc, a released string — but it carries a *specific-project fingerprint* (your own product's name, an internal borrowed-library name, a concrete field name/unit/value you measured, a "we / our product" voice). It works *for you* because it's your own context; it leaks because the audience is a stranger.
+
+**This is Step 7 (defensive pollution) applied to YOUR OWN artifact you're about to ship**, rather than to a codebase you're auditing. Step 7 scans someone else's deliverable; Step 13 scans the one in your hand, right before it goes out.
+
+**Trigger**: whenever you are about to publish / commit / push / release / submit anything that a stranger will read — a repo file, a README, a skill, a landing page, a public doc, an issue, a PR description. **Apply it to the artifact itself, not just to code.**
+
+**The four-question test** (run against every public artifact before releasing):
+1. **Project-specific noun?** Does it name your own product/feature/domain (a brand, an internal module, a scenario name)? → Replace with a generic term (e.g. "a card", "a scene", "an agent workspace").
+2. **Fingerprint detail?** Does it carry a *concrete* field name, unit, or measured value that only your code produces (a registry field, a `XX:1000` number, a hardcoded enum value)? → Abstract to a placeholder (`<field>`, `<value>`), or phrase it as "one registry calls it X, another Y" without the real names.
+3. **Borrowed/inspiration name?** Does it name a specific third-party project you borrowed from, as if the reader knows it (a framework's name as a contrast)? → Say the *kind* instead ("a chaotic multi-agent swarm"), not the brand.
+4. **Producer-voice leakage?** Does it address the producer ("note to self", "we/there's only one dev", "my product") instead of the reader? → Rewrite for the *reader*; the artifact must stand alone without knowing you.
+
+**The deletion test (falsifiable, iron rule 9)**: delete every project-specific noun / fingerprint / borrowed name / producer-voice phrase — is the artifact still complete and MORE universal? If yes, those were leaks and must go. If removing it breaks the meaning, it was load-bearing; keep it but phrase it generically.
+
+**Breadth — apply it everywhere, not just the main file**: README, marketing/promotion copy, the skill's own SKILL.md, public docs, example code, config templates, commit messages, PR descriptions, issue bodies, release notes. The leak hides in the *small* file as often as the big one.
+
+**Severity**: High = leaks an internal design/product detail that (a) does not apply to strangers, or (b) reveals you measured an internal metric — makes the artifact non-universal; Medium = a named borrowed framework subtly narrowing the audience; Low = a producer-voice "we" that reads oddly but doesn't confuse.
+
+**Iron rule 8 (false-positive check)**: a *generic* word (rendering, storage, agent, card, scene, model) is NOT a leak — it's the reader-facing vocabulary. Only flag terms that (a) are proper nouns of your own project, (b) are concrete fingerprints, or (c) assume the reader shares your internal context. Don't over-sanitize a good universal sentence.
+
 ---
 
 ## 3. Output Format
@@ -449,6 +482,8 @@ Output the layered results + step 11's attribution. The body is the layer classi
 
 **Report header states the audit tier** and what was skipped (honest, not hidden). Every defect uniformly carries: `trigger sequence → expected vs actual → root → owning layer → severity → falsifiable verification`. The conclusion is "the few root causes + impact ranking", not dozens of symptoms laid flat.
 
+> **The report itself is a public artifact** — before you ship/commit/push it (or the code it describes), run **Step 13 (publish gate)** on it too. An audit report full of the owner's internal project nouns is Step-13 pollution, even if the audit was correct.
+
 ---
 
 ## 4. Capability Boundary
@@ -465,10 +500,11 @@ Output the layered results + step 11's attribution. The body is the layer classi
 | ⚡ Concurrency & stress | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
 | 🔗 Cross-scenario | cross-scenario contamination, precise switching, memory/state recall correctness, cross-module routing |
 | 🧩 Tech-stack unification | **adapter-convergence failure**: one concern solved by N parallel adapters / 1 live + 1 dead / write-only capability registry / ghost enum value / two names or two units for one fact / partial-use heavy borrow |
+| 🚪 Publish gate *(self)* | **pre-publication leak** in your OWN artifact about to ship: project-specific noun / concrete fingerprint (field name + unit + measured value) / named borrowed framework / producer-voice "we" — the artifact must stand alone for a stranger |
 
 > On-demand triggering, not a dump: ask "who is it for, where does it ship" and skip what doesn't apply (no store review for something not shipping, no mobile review for a desktop app).
 
-- **Good at**: logic contradictions, stuck flows, state pollution, missing branches, path boundaries, experience-layer gaps, jailbreak penetration, concurrency races, AI smell, over-engineering, store rejections, **release hygiene**, **defensive-content pollution**, **wheel reinvention**, **adapter convergence (tech-stack unification)**.
+- **Good at**: logic contradictions, stuck flows, state pollution, missing branches, path boundaries, experience-layer gaps, jailbreak penetration, concurrency races, AI smell, over-engineering, store rejections, **release hygiene**, **defensive-content pollution**, **wheel reinvention**, **adapter convergence (tech-stack unification)**, **publish gate (pre-publication self-check)**.
 - **Read-only during audit, fixing happens in the loop**: don't modify code during the audit (avoid contaminating the scene); the audit produces "a few root causes + precise file:line + falsifiable verification"; after user confirmation, the same agent fixes precisely and verifies "did the symptom disappear". The full loop is `audit → confirm → fix → verify`.
 - **Limitation**: paper traversal surfaces specification-layer contradictions; if actual runtime behavior differs from what code implies, flag the gap and feed it back into the state machine.
 - **Cannot do**: read binaries / reverse-engineer, replace real UI visual inspection, replace real execution regression (the latter go to vision tools / ux-toolkit / agent-qa). This skill is a "localization + big-picture + orchestration + differentiated-check" tool; fixing is executed by the agent after user confirmation.
