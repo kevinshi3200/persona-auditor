@@ -57,7 +57,7 @@ audit → report (root cause + location) → you confirm → agent fixes → ver
 
 1. **Paper traversal is the means, not the end.** "Not executing, not clicking" is how we *exhaust every path* — faster and more global than real clicking. The end goal is **precise fixing** — finding the few root causes so you fix once, not patch forever.
 2. **Exhaustiveness is the soul; sampling is negligence.** One happy path proves nothing. The full `persona × function × operation × state × timing` matrix is traversed, with coverage quantified and provable.
-3. **Code is the single source of truth.** We reason from the behavior recovered by *reading the code*, not from docs or memory.
+3. **Code is the single source of truth.** Reason from the behavior recovered by *reading the code*, not from docs or memory.
 4. **Deterministic, not chaotic.** Code and state machines are deterministic, so the simulation is deterministic too — a bounded set of personas, reproducible results.
 5. **Facts and opinions are separated.** Walkers record only code-verifiable facts (broke at `file:line`, in N steps); the intent observer adds human-weighted *hypotheses*, explicitly tagged — never conflated with findings.
 6. **Falsifiable or it isn't a finding.** Every root cause must carry a verification path ("if I fix X, symptom Y disappears"). No verification path = downgraded to "impression", never reported as a conclusion.
