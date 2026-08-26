@@ -6,6 +6,8 @@
 
 从真实用户视角审计 AI 代码，找出你反复试验才能发现、甚至永远发现不了的错误，归因成少数根因，**一次修对**。
 
+**🌐 [English](./README.md) / [简体中文](./README.zh-CN.md)**
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Type: agent skill](https://img.shields.io/badge/type-agent--skill-8A2BE2.svg)](https://github.com/kevinshi3200/persona-auditor)
 [![skills.sh](https://skills.sh/b/kevinshi3200/persona-auditor)](https://skills.sh/b/kevinshi3200/persona-auditor)
@@ -64,7 +66,7 @@ audit → report (root cause + location) → you confirm → agent fixes → ver
 
 ## What it detects
 
-Seven dimensions, dozens of checks — one table to show the coverage:
+Seven dimensions — plus tech-stack unification — dozens of checks, one table to show the coverage:
 
 | Dimension | What it detects |
 |---|---|
@@ -75,6 +77,7 @@ Seven dimensions, dozens of checks — one table to show the coverage:
 | 📋 **Compliance & release** | software-copyright compliance, store-review gating, missing EULA/copyright notices, secret leakage, real PII leakage, internal info / trial-and-error traces leaked, defensive-content pollution (corrections / warnings / self-reminders in public artifacts) |
 | ⚡ **Concurrency & stress** | multi-task concurrency, races, timeouts, interruption, duplicate submission, rapid switching, multi-subagent conflicts |
 | 🔗 **Cross-scenario** | cross-scenario contamination, precise switching, memory/state recall correctness, cross-module routing |
+| 🧩 **Tech-stack unification** | adapter-convergence failure: one concern solved by N parallel adapters / 1 live + 1 dead / write-only capability registry / ghost enum value / two names or two units for one fact / partial-use heavy borrow |
 
 > Checks are **triggered on demand, not dumped on you.** The audit first asks "who is it for, where does it ship" and skips what doesn't apply — no store review for something not shipping, no mobile App Store review for a desktop app.
 
@@ -86,7 +89,7 @@ Seven dimensions, dozens of checks — one table to show the coverage:
 2. **Project map** — reads the code to list every page / command / scenario and its core journeys, so nothing is left to guesswork.
 3. **Exhaustive traversal** — equivalence classes + boundary values + orthogonal arrays cover the full path matrix without combinatorial explosion.
 4. **Two-layer personas** — mechanical *walkers* record only facts (broke at `file:line`, in N steps, and whether it's an intended gate or an accidental break); an *intent observer* adds human-weighted hypotheses.
-5. **Six-layer checks** — security, AI-smell, release hygiene, defensive-content pollution, wheel reinvention, plus three-way alignment.
+5. **Six-layer checks** — security, AI-smell, release hygiene, defensive-content pollution, wheel reinvention, adapter convergence (tech-stack unification), plus three-way alignment.
 6. **God's-eye attribution** — counterfactual reasoning separates root causes from symptoms and ranks them by impact.
 
 ---
